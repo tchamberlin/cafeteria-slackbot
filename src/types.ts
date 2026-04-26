@@ -4,7 +4,34 @@ export interface Env {
   SLACK_SIGNING_SECRET?: string;
   SLACK_BOT_TOKEN?: string;
   SLACK_CHANNEL_ID?: string;
+  SLACK_ADMIN_CHANNEL_ID?: string;
   ADMIN_TOKEN?: string;
+}
+
+export interface PostedMenuRecord {
+  date: string;
+  special: string;
+  ts: string;
+  channel: string;
+  postedAt: string;
+}
+
+export interface MenuChange {
+  date: string;
+  previousSpecial: string | null;
+  newSpecial: string | null;
+}
+
+export interface IngestResult {
+  ignored: boolean;
+  parsed: boolean;
+  weekStart?: string;
+  error?: string;
+  followUp: boolean;
+  becameAuthoritative: boolean;
+  previousAuthoritativeSubject: string | null;
+  newAuthoritativeSubject: string | null;
+  changedDates: MenuChange[];
 }
 
 export interface ParsedCafeteriaMenu {

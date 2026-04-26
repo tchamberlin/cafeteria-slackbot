@@ -1,9 +1,11 @@
 import PostalMime from "postal-mime";
+import { handleIngestSideEffects } from "./ingest-notify";
 import {
   ingestNormalizedMessage,
   listMenus,
   listMessages,
   loadLunchSpecial,
+  recordDailyPost,
   reparseStoredMessages,
   storeRawEmail,
 } from "./menu-store";
@@ -26,13 +28,23 @@ interface EmailEventMessage {
 export default {
   async email(message: EmailEventMessage, env: Env): Promise<void> {
     const normalized = await normalizeEmailMessage(message, env);
-    await ingestNormalizedMessage(env, normalized);
+    const result = await ingestNormalizedMessage(env, normalized);
+    await handleIngestSideEffects(env, normalized, result);
   },
 
   async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
     const today = parseCommandDate("today");
     const result = await loadLunchSpecial(env, today);
-    await postSlackMessage(env, formatLunchResponse(result));
+    const post = await postSlackMessage(env, formatLunchResponse(result));
+    if (result.status === "ok" && result.special && post.ts) {
+      await recordDailyPost(env, {
+        date: result.date,
+        special: result.special,
+        ts: post.ts,
+        channel: post.channel,
+        postedAt: new Date().toISOString(),
+      });
+    }
   },
 
   async fetch(request: Request, env: Env): Promise<Response> {

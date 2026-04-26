@@ -1,6 +1,12 @@
-import { describe, expect, it } from "vitest";
-import { formatLunchResponse, parseCommandDate } from "../src/slack";
-import type { LunchSpecialResult } from "../src/types";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  formatLunchResponse,
+  parseCommandDate,
+  postSlackAdminMessage,
+  postSlackMessage,
+  postSlackThreadReply,
+} from "../src/slack";
+import type { Env, LunchSpecialResult } from "../src/types";
 
 const SAT_2345_ET = new Date("2026-04-25T23:45:00-04:00");
 const SUN_0345_UTC = new Date("2026-04-26T03:45:00Z");
@@ -112,5 +118,78 @@ describe("formatLunchResponse", () => {
     expect(formatLunchResponse(result, SUN_0800_ET)).toBe(
       "No menu email found for today (Sunday, 2026-04-26).",
     );
+  });
+});
+
+describe("slack chat.postMessage helpers", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function jsonResponse(payload: unknown): Response {
+    return new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  function envWith(overrides: Partial<Env> = {}): Env {
+    return {
+      MENU_STORE: {} as unknown as KVNamespace,
+      SLACK_BOT_TOKEN: "xoxb-test",
+      SLACK_CHANNEL_ID: "C123",
+      ...overrides,
+    };
+  }
+
+  it("postSlackMessage returns the ts and channel from the Slack response", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true, ts: "1714000000.000100", channel: "C123" }));
+
+    const result = await postSlackMessage(envWith(), "hello");
+
+    expect(result).toEqual({ ts: "1714000000.000100", channel: "C123" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse((init as RequestInit).body as string);
+    expect(body).toMatchObject({ channel: "C123", text: "hello", mrkdwn: true });
+    expect(body.thread_ts).toBeUndefined();
+  });
+
+  it("postSlackAdminMessage posts to SLACK_ADMIN_CHANNEL_ID", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true, ts: "1.0", channel: "C-ADMIN" }));
+
+    await postSlackAdminMessage(envWith({ SLACK_ADMIN_CHANNEL_ID: "C-ADMIN" }), "alert");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse((init as RequestInit).body as string);
+    expect(body).toMatchObject({ channel: "C-ADMIN", text: "alert" });
+  });
+
+  it("postSlackAdminMessage no-ops cleanly when SLACK_ADMIN_CHANNEL_ID is unset", async () => {
+    await postSlackAdminMessage(envWith(), "alert");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("postSlackThreadReply includes thread_ts and the explicit channel", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true, ts: "1.1", channel: "C-USER" }));
+
+    const result = await postSlackThreadReply(envWith(), "C-USER", "1714000000.000100", "reply");
+
+    expect(result).toEqual({ ts: "1.1", channel: "C-USER" });
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse((init as RequestInit).body as string);
+    expect(body).toMatchObject({
+      channel: "C-USER",
+      thread_ts: "1714000000.000100",
+      text: "reply",
+    });
   });
 });

@@ -57,8 +57,11 @@ npx wrangler secret put ALLOWED_SENDER
 npx wrangler secret put SLACK_SIGNING_SECRET
 npx wrangler secret put SLACK_BOT_TOKEN
 npx wrangler secret put SLACK_CHANNEL_ID
+npx wrangler secret put SLACK_ADMIN_CHANNEL_ID  # optional; admin alerts go here
 npx wrangler secret put ADMIN_TOKEN
 ```
+
+`SLACK_ADMIN_CHANNEL_ID` is the channel (or self-DM) the worker posts to when it detects a follow-up cafeteria email (a 2nd+ email for the same week, including corrections) or a parse error on an allowed-sender email. Leave it unset to silence those alerts.
 
 `ALLOWED_SENDER` must be the exact cafeteria sender address. For mailing-list-delivered menus (e.g. `gbemploy@listmgr.nrao.edu`), use the list address — Mailman rewrites `From:` to the list itself even when a human authored the message. Messages from any other sender are stored as normalized email records but ignored for menu parsing and Slack results.
 
@@ -115,4 +118,5 @@ emails/parse-errors/<id>.json
 menus/week/<YYYY-MM-DD>
 menus/latest
 menus:index
+posts/<YYYY-MM-DD>          # ts/channel of each daily Slack post, used to thread correction notices
 ```

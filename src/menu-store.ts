@@ -1,9 +1,12 @@
 import {
   CafeteriaMenuParseError,
   type Env,
+  type IngestResult,
   type LunchSpecialResult,
   type MenuCandidate,
+  type MenuChange,
   type NormalizedEmailMessage,
+  type PostedMenuRecord,
   type StoredWeekMenu,
 } from "./types";
 import { isCafeteriaMenuSubject, parseCafeteriaMenuEmail } from "./menu-parser";
@@ -11,20 +14,30 @@ import { isCafeteriaMenuSubject, parseCafeteriaMenuEmail } from "./menu-parser";
 export const EMAIL_INDEX_KEY = "emails:index";
 export const MENU_INDEX_KEY = "menus:index";
 export const LATEST_MENU_KEY = "menus/latest";
+export const POSTS_PREFIX = "posts/";
 export const MAX_STORED_MESSAGES = 100;
+
+export interface UpsertResult {
+  menu: StoredWeekMenu;
+  followUp: boolean;
+  becameAuthoritative: boolean;
+  previousAuthoritativeSubject: string | null;
+  newAuthoritativeSubject: string | null;
+  changedDates: MenuChange[];
+}
 
 export async function ingestNormalizedMessage(
   env: Env,
   message: NormalizedEmailMessage,
-): Promise<{ ignored: boolean; parsed: boolean; weekStart?: string; error?: string }> {
+): Promise<IngestResult> {
   await storeNormalizedMessage(env, message);
 
   if (!isAllowedSender(env, message.from)) {
-    return { ignored: true, parsed: false, error: "sender_not_allowed" };
+    return emptyIngestResult({ ignored: true, parsed: false, error: "sender_not_allowed" });
   }
 
   if (!isCafeteriaMenuSubject(message.subject)) {
-    return { ignored: true, parsed: false };
+    return emptyIngestResult({ ignored: true, parsed: false });
   }
 
   try {
@@ -42,26 +55,45 @@ export async function ingestNormalizedMessage(
       sourceReceivedAt: message.receivedAt,
       sourceMessageId: message.messageId || message.id,
     };
-    await upsertMenuCandidate(env, candidate);
-    return { ignored: false, parsed: true, weekStart: parsed.weekStart };
+    const upsert = await upsertMenuCandidate(env, candidate);
+    return {
+      ignored: false,
+      parsed: true,
+      weekStart: parsed.weekStart,
+      followUp: upsert.followUp,
+      becameAuthoritative: upsert.becameAuthoritative,
+      previousAuthoritativeSubject: upsert.previousAuthoritativeSubject,
+      newAuthoritativeSubject: upsert.newAuthoritativeSubject,
+      changedDates: upsert.changedDates,
+    };
   } catch (error) {
     const parseError = error instanceof Error ? error.message : String(error);
     await env.MENU_STORE.put(parseErrorKey(message.id), JSON.stringify({ message, error: parseError }));
-    return {
+    return emptyIngestResult({
       ignored: false,
       parsed: false,
       weekStart: error instanceof CafeteriaMenuParseError ? error.weekStart : undefined,
       error: parseError,
-    };
+    });
   }
 }
 
-export async function upsertMenuCandidate(env: Env, candidate: MenuCandidate): Promise<StoredWeekMenu> {
+export async function upsertMenuCandidate(env: Env, candidate: MenuCandidate): Promise<UpsertResult> {
   const key = weekMenuKey(candidate.weekStart);
   const existing = await env.MENU_STORE.get<StoredWeekMenu>(key, "json");
-  const candidates = dedupeCandidates([candidate, ...(existing?.candidates || [])]);
+  const previousCandidates = existing?.candidates || [];
+  const previousAuthoritative = existing?.authoritative || null;
+  const followUp = previousCandidates.length > 0;
+
+  const candidates = dedupeCandidates([candidate, ...previousCandidates]);
   candidates.sort(compareCandidatesDescending);
   const authoritative = candidates[0];
+
+  const becameAuthoritative = authoritative.sourceMessageId === candidate.sourceMessageId;
+  const changedDates = becameAuthoritative
+    ? diffSpecials(previousAuthoritative?.specialsByDate || {}, authoritative.specialsByDate)
+    : [];
+
   const menu: StoredWeekMenu = {
     version: 1,
     generatedAt: new Date().toISOString(),
@@ -74,7 +106,25 @@ export async function upsertMenuCandidate(env: Env, candidate: MenuCandidate): P
   await env.MENU_STORE.put(key, JSON.stringify(menu));
   await env.MENU_STORE.put(LATEST_MENU_KEY, JSON.stringify(menu));
   await addToStringIndex(env, MENU_INDEX_KEY, candidate.weekStart);
-  return menu;
+  return {
+    menu,
+    followUp,
+    becameAuthoritative,
+    previousAuthoritativeSubject: previousAuthoritative?.sourceSubject ?? null,
+    newAuthoritativeSubject: authoritative.sourceSubject,
+    changedDates,
+  };
+}
+
+export async function recordDailyPost(
+  env: Env,
+  record: PostedMenuRecord,
+): Promise<void> {
+  await env.MENU_STORE.put(dailyPostKey(record.date), JSON.stringify(record));
+}
+
+export async function loadDailyPost(env: Env, date: string): Promise<PostedMenuRecord | null> {
+  return (await env.MENU_STORE.get<PostedMenuRecord>(dailyPostKey(date), "json")) ?? null;
 }
 
 export async function loadLunchSpecial(env: Env, targetDate: string): Promise<LunchSpecialResult> {
@@ -243,6 +293,42 @@ function weekStartForIsoDate(value: string): string {
 
 function weekMenuKey(weekStart: string): string {
   return `menus/week/${weekStart}`;
+}
+
+function dailyPostKey(date: string): string {
+  return `${POSTS_PREFIX}${date}`;
+}
+
+function diffSpecials(
+  previous: Record<string, string>,
+  next: Record<string, string>,
+): MenuChange[] {
+  const dates = new Set([...Object.keys(previous), ...Object.keys(next)]);
+  const changes: MenuChange[] = [];
+  for (const date of [...dates].sort()) {
+    const previousSpecial = previous[date] ?? null;
+    const newSpecial = next[date] ?? null;
+    if (previousSpecial !== newSpecial) {
+      changes.push({ date, previousSpecial, newSpecial });
+    }
+  }
+  return changes;
+}
+
+function emptyIngestResult(base: {
+  ignored: boolean;
+  parsed: boolean;
+  weekStart?: string;
+  error?: string;
+}): IngestResult {
+  return {
+    ...base,
+    followUp: false,
+    becameAuthoritative: false,
+    previousAuthoritativeSubject: null,
+    newAuthoritativeSubject: null,
+    changedDates: [],
+  };
 }
 
 function normalizedMessageKey(id: string): string {

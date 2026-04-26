@@ -89,32 +89,79 @@ function addUtcDays(isoDate: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-export async function postSlackMessage(env: Env, text: string): Promise<void> {
+export interface SlackPostResult {
+  ts: string;
+  channel: string;
+}
+
+export async function postSlackMessage(env: Env, text: string): Promise<SlackPostResult> {
   if (!env.SLACK_BOT_TOKEN) {
     throw new Error("SLACK_BOT_TOKEN is not configured.");
   }
   if (!env.SLACK_CHANNEL_ID) {
     throw new Error("SLACK_CHANNEL_ID is not configured.");
   }
+  return chatPostMessage(env.SLACK_BOT_TOKEN, {
+    channel: env.SLACK_CHANNEL_ID,
+    text,
+    mrkdwn: true,
+  });
+}
 
+export async function postSlackAdminMessage(env: Env, text: string): Promise<void> {
+  if (!env.SLACK_BOT_TOKEN) {
+    console.warn("postSlackAdminMessage skipped: SLACK_BOT_TOKEN is not configured.");
+    return;
+  }
+  if (!env.SLACK_ADMIN_CHANNEL_ID) {
+    console.warn("postSlackAdminMessage skipped: SLACK_ADMIN_CHANNEL_ID is not configured.");
+    return;
+  }
+  await chatPostMessage(env.SLACK_BOT_TOKEN, {
+    channel: env.SLACK_ADMIN_CHANNEL_ID,
+    text,
+    mrkdwn: true,
+  });
+}
+
+export async function postSlackThreadReply(
+  env: Env,
+  channel: string,
+  threadTs: string,
+  text: string,
+): Promise<SlackPostResult> {
+  if (!env.SLACK_BOT_TOKEN) {
+    throw new Error("SLACK_BOT_TOKEN is not configured.");
+  }
+  return chatPostMessage(env.SLACK_BOT_TOKEN, {
+    channel,
+    thread_ts: threadTs,
+    text,
+    mrkdwn: true,
+  });
+}
+
+async function chatPostMessage(
+  botToken: string,
+  body: { channel: string; text: string; mrkdwn: boolean; thread_ts?: string },
+): Promise<SlackPostResult> {
   const response = await fetch("https://slack.com/api/chat.postMessage", {
     method: "POST",
     headers: {
-      authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
+      authorization: `Bearer ${botToken}`,
       "content-type": "application/json; charset=utf-8",
     },
-    body: JSON.stringify({
-      channel: env.SLACK_CHANNEL_ID,
-      text,
-      mrkdwn: true,
-    }),
+    body: JSON.stringify(body),
   });
 
-  const payload = (await response.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+  const payload = (await response.json().catch(() => null)) as
+    | { ok?: boolean; error?: string; ts?: string; channel?: string }
+    | null;
   if (!response.ok || !payload?.ok) {
     const detail = payload?.error || `http_${response.status}`;
     throw new Error(`Slack chat.postMessage failed: ${detail}`);
   }
+  return { ts: payload.ts || "", channel: payload.channel || body.channel };
 }
 
 export function slackJson(text: string, status = 200): Response {
