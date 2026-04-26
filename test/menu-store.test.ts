@@ -42,8 +42,6 @@ function message(from: string): NormalizedEmailMessage {
       Thursday: Chicken Sandwich
       Friday: Spaghetti
     `,
-    bodyHtml: null,
-    bodyContentType: "text",
     rawKey: "emails/raw/sample.eml",
   };
 }

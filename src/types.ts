@@ -20,8 +20,6 @@ export interface NormalizedEmailMessage {
   to: string | null;
   subject: string;
   bodyText: string;
-  bodyHtml: string | null;
-  bodyContentType: "text" | "html";
   rawKey: string;
   messageId: string | null;
 }

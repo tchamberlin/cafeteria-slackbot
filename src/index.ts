@@ -88,7 +88,6 @@ async function normalizeEmailMessage(message: EmailEventMessage, env: Env): Prom
   const rawKey = await storeRawEmail(env, id, receivedAt, raw);
   const subject = parsed.subject || message.headers.get("subject") || "";
   const from = parsed.from?.address || message.from || null;
-  const bodyHtml = parsed.html ? String(parsed.html) : null;
   const bodyText = String(parsed.text || "");
 
   return {
@@ -98,8 +97,6 @@ async function normalizeEmailMessage(message: EmailEventMessage, env: Env): Prom
     to: message.to || null,
     subject,
     bodyText: normalizeLineEndings(bodyText).trim(),
-    bodyHtml,
-    bodyContentType: bodyHtml ? "html" : "text",
     rawKey,
     messageId: parsed.messageId || null,
   };

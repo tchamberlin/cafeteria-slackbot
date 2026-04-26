@@ -30,9 +30,6 @@ Run a `.eml` file through the parser locally to inspect what the worker would se
 
 ```bash
 npm run parse -- example_menu_email.eml
-# Optional flags:
-#   --text-only   only run the plain-text body
-#   --html-only   only run the HTML body
 ```
 
 ## Cloudflare Setup

@@ -30,17 +30,6 @@ describe("cafeteria menu parser", () => {
     expect(parsed.specialsByDate["2026-04-24"]).toBe("Fish and Chips");
   });
 
-  it("parses html weekly menus", () => {
-    const parsed = parseCafeteriaMenuEmail(
-      "Cafeteria Menu for April 20-24, 2026",
-      fixture("html_menu.html"),
-      "html",
-    );
-
-    expect(parsed.specialsByDate["2026-04-21"]).toBe("Black Bean Tacos");
-    expect(parsed.specialsByDate["2026-04-24"]).toBe("Shrimp Po' Boy");
-  });
-
   it("uses received date as the year anchor for real subject variants", () => {
     const parsed = parseCafeteriaMenuEmail(
       "[Gbemploy] Next weeks cafeteria menu",
@@ -53,7 +42,6 @@ describe("cafeteria menu parser", () => {
       Thursday: Chicken Sandwich
       Friday: Spaghetti
       `,
-      "text",
       "2026-04-17T18:43:54Z",
     );
 
@@ -87,7 +75,6 @@ describe("cafeteria menu parser", () => {
       Thursday: 8" Hot Italian Sub
       Friday: Chicken Noodle Soup
       `,
-      "text",
       "2025-11-17T14:45:50Z",
     );
 
@@ -99,7 +86,6 @@ describe("cafeteria menu parser", () => {
     const parsed = parseCafeteriaMenuEmail(
       "[Gbemploy] Slight change in todays menu",
       'We will be having a "Grilled" Chicken Breast Sandwich today....not "Breaded"',
-      "text",
       "2025-08-15T14:40:04Z",
     );
 
@@ -111,7 +97,6 @@ describe("cafeteria menu parser", () => {
     const parsed = parseCafeteriaMenuEmail(
       "[Gbemploy] Next weeks cafeteria menu",
       fixture("gbo_real_email.txt"),
-      "text",
       "2026-04-24T17:55:29Z",
     );
 
@@ -127,20 +112,32 @@ describe("cafeteria menu parser", () => {
     expect(parsed.correctionHint).toBe(false);
   });
 
-  it("parses the real GBO menu HTML body with cross-month yearless date", () => {
+  it("strips Thunderbird-style **bold**, _underscore_, and emoji-bracketed /italic/ emphasis", () => {
     const parsed = parseCafeteriaMenuEmail(
       "[Gbemploy] Next weeks cafeteria menu",
-      fixture("gbo_real_email.html"),
-      "html",
-      "2026-04-24T17:55:29Z",
+      `
+      GBO Cafeteria Menu
+      April 13th-17th
+      Monday: Quarter Pound Bacon Cheeseburger with fries
+      Tuesday: All Employee Lunch for Steve White Retirement
+      Pork Ribs, Baked Beans, Cornbread
+      **Lunch service begins at 12:00pm**
+      Wednesday: Pizza Buffet
+      _Lunch service begins at 12:00_
+      Thursday: Cookout 😎/please bring cash or charge your meal this day/😎
+      Friday: Cheesy Chicken Ranch Wrap
+      `,
+      "2026-04-09T17:40:15Z",
     );
 
-    expect(parsed.weekStart).toBe("2026-04-27");
-    expect(parsed.specialsByDate["2026-04-27"]).toBe(
-      "Breaded Chicken Tenders, mashed potatoes with country gravy and corn",
+    expect(parsed.specialsByDate["2026-04-14"]).toBe(
+      "All Employee Lunch for Steve White Retirement Pork Ribs, Baked Beans, Cornbread Lunch service begins at 12:00pm",
     );
-    expect(parsed.specialsByDate["2026-05-01"]).toBe(
-      "Spinach and Mushroom Quesadillas served with black bean salad",
+    expect(parsed.specialsByDate["2026-04-15"]).toBe(
+      "Pizza Buffet Lunch service begins at 12:00",
+    );
+    expect(parsed.specialsByDate["2026-04-16"]).toBe(
+      "Cookout 😎please bring cash or charge your meal this day😎",
     );
   });
 
@@ -148,7 +145,6 @@ describe("cafeteria menu parser", () => {
     const parsed = parseCafeteriaMenuEmail(
       "FW: [Gbemploy] Next weeks cafeteria menu",
       fixture("forwarded_outlook.txt"),
-      "text",
       "2026-04-24T18:30:00Z",
     );
 
@@ -176,8 +172,7 @@ describe("cafeteria menu parser", () => {
     const parsedEmail = await PostalMime.parse(raw);
     const parsedMenu = parseCafeteriaMenuEmail(
       parsedEmail.subject || "",
-      String(parsedEmail.html || parsedEmail.text || ""),
-      parsedEmail.html ? "html" : "text",
+      String(parsedEmail.text || ""),
       parsedEmail.date ? new Date(parsedEmail.date).toISOString() : undefined,
     );
 

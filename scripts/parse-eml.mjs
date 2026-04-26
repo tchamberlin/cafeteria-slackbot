@@ -12,11 +12,7 @@ const PARSER_TS = resolvePath(HERE, "..", "src", "menu-parser.ts");
 
 const args = process.argv.slice(2);
 if (args.length === 0 || args.includes("-h") || args.includes("--help")) {
-  process.stderr.write(
-    "Usage: npm run parse -- <path/to/file.eml> [--text-only] [--html-only]\n" +
-      "  --text-only    Only run the plain-text body through the parser.\n" +
-      "  --html-only    Only run the HTML body through the parser.\n",
-  );
+  process.stderr.write("Usage: npm run parse -- <path/to/file.eml>\n");
   process.exit(args.length === 0 ? 1 : 0);
 }
 const emlPath = args.find((a) => !a.startsWith("--"));
@@ -41,9 +37,7 @@ const { isCafeteriaMenuSubject, normalizeBodyToText, parseCafeteriaMenuEmail } =
 const raw = readFileSync(emlPath, "utf8");
 const email = await PostalMime.parse(raw);
 const receivedAt = email.date ? new Date(email.date).toISOString() : undefined;
-
-const textOnly = args.includes("--text-only");
-const htmlOnly = args.includes("--html-only");
+const body = String(email.text || "");
 
 printSection("Headers", {
   subject: email.subject ?? null,
@@ -51,32 +45,17 @@ printSection("Headers", {
   fromName: email.from?.name ?? null,
   replyTo: email.replyTo?.[0]?.address ?? null,
   date: receivedAt ?? null,
-  hasHtml: Boolean(email.html),
   hasText: Boolean(email.text),
   isCafeteriaMenuSubject: isCafeteriaMenuSubject(email.subject || ""),
 });
 
-if (!htmlOnly) {
-  runOne("Plain text body", String(email.text || ""), "text", email.subject || "", receivedAt);
-}
-if (!textOnly && email.html) {
-  runOne("HTML body", String(email.html), "html", email.subject || "", receivedAt);
-}
-
-if (!htmlOnly && !textOnly) {
-  const pref = email.html ? "HTML" : "text";
-  process.stdout.write(`\n(worker prefers ${pref} when ingesting this message)\n`);
-}
-
-function runOne(label, body, contentType, subject, receivedAt) {
-  process.stdout.write(`\n=== ${label}: normalized ===\n`);
-  process.stdout.write(normalizeBodyToText(body, contentType) + "\n");
-  try {
-    const menu = parseCafeteriaMenuEmail(subject, body, contentType, receivedAt);
-    printSection(`${label}: parsed`, menu);
-  } catch (error) {
-    process.stdout.write(`\n=== ${label}: parse error ===\n${error.message}\n`);
-  }
+process.stdout.write("\n=== Plain text body: normalized ===\n");
+process.stdout.write(normalizeBodyToText(body) + "\n");
+try {
+  const menu = parseCafeteriaMenuEmail(email.subject || "", body, receivedAt);
+  printSection("Plain text body: parsed", menu);
+} catch (error) {
+  process.stdout.write(`\n=== Plain text body: parse error ===\n${error.message}\n`);
 }
 
 function printSection(label, payload) {

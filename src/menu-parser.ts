@@ -94,10 +94,9 @@ export function isCafeteriaMenuSubject(subject: string): boolean {
 export function parseCafeteriaMenuEmail(
   subject: string,
   body: string,
-  bodyContentType: "text" | "html" = "text",
   receivedAt?: string | Date,
 ): ParsedCafeteriaMenu {
-  const normalizedText = normalizeBodyToText(body, bodyContentType);
+  const normalizedText = normalizeBodyToText(body);
   const todayChange = parseTodayChange(subject, normalizedText, receivedAt);
   if (todayChange) {
     return todayChange;
@@ -125,18 +124,8 @@ export function parseCafeteriaMenuEmail(
   };
 }
 
-export function normalizeBodyToText(body: string, contentType?: string): string {
-  let text = body || "";
-  if ((contentType || "").toLowerCase() === "html") {
-    text = text
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/(?:p|div|li)\s*>/gi, "\n")
-      .replace(/<li[^>]*>/gi, "- ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<[^>]+>/g, " ");
-  }
-  text = decodeHtmlEntities(text).replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n");
+export function normalizeBodyToText(body: string): string {
+  let text = (body || "").replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n");
   text = stripMailingListFooter(text);
   text = stripFlowedEmphasis(text);
   return text
@@ -149,8 +138,13 @@ function stripFlowedEmphasis(text: string): string {
   return text
     .split("\n")
     .map((line) => {
-      let cleaned = line.replace(/^\s*\/(?=\S)/, "").replace(/(?<=\S)\/\s*$/, "");
-      cleaned = cleaned.replace(/\*([^*\n]+)\*/g, "$1");
+      let cleaned = line
+        .replace(/^\s*\/(?=\S)/, "")
+        .replace(/(?<=\S)\/\s*$/, "");
+      cleaned = cleaned
+        .replace(/\*+([^*\n]+)\*+/g, "$1")
+        .replace(/(^|[^\w_])_+([^_\n]+)_+(?=[^\w_]|$)/g, "$1$2")
+        .replace(/(^|[^\w/])\/([^/\n]+)\/(?=[^\w/]|$)/g, "$1$2");
       if (/^\s*\/+\s*$/.test(cleaned)) {
         return "";
       }
@@ -290,7 +284,7 @@ function parseTodayChange(
 }
 
 function cleanMenuLine(value: string): string {
-  return normalizeBodyToText(value, "text")
+  return normalizeBodyToText(value)
     .trim()
     .replace(/^[ *:\t-]+|[ *:\t-]+$/g, "")
     .replace(/^\*+|\*+$/g, "")
@@ -383,16 +377,4 @@ function monthName(monthIndex: number): string {
     "November",
     "December",
   ][monthIndex];
-}
-
-function decodeHtmlEntities(value: string): string {
-  return value
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/&#(\d+);/g, (_match, code) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_match, code) => String.fromCodePoint(Number.parseInt(code, 16)));
 }

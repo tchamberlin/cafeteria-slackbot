@@ -30,8 +30,7 @@ export async function ingestNormalizedMessage(
   try {
     const parsed = parseCafeteriaMenuEmail(
       message.subject,
-      message.bodyHtml || message.bodyText,
-      message.bodyHtml ? "html" : message.bodyContentType,
+      message.bodyText,
       message.receivedAt,
     );
     const candidate: MenuCandidate = {
@@ -122,8 +121,7 @@ export async function reparseStoredMessages(env: Env): Promise<{ messages: numbe
     try {
       const parsed = parseCafeteriaMenuEmail(
         message.subject,
-        message.bodyHtml || message.bodyText,
-        message.bodyHtml ? "html" : message.bodyContentType,
+        message.bodyText,
         message.receivedAt,
       );
       const candidate: MenuCandidate = {
