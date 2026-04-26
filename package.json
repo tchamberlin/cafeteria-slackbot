@@ -9,6 +9,7 @@
     "test": "vitest run",
     "parse": "node scripts/parse-eml.mjs",
     "send": "node scripts/send-menu.mjs",
+    "menu": "node scripts/show-menu.mjs",
     "lint": "npm run typecheck && npm run test && wrangler deploy --dry-run"
   },
   "dependencies": {
