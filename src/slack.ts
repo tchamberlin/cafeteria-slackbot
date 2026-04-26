@@ -1,4 +1,5 @@
 import type { Env, LunchSpecialResult } from "./types";
+import { CAFETERIA_TZ, isoDateInZone } from "./tz";
 
 const COMMAND_USAGE = "Use `/lunch`, `/lunch today`, `/lunch tomorrow`, or `/lunch YYYY-MM-DD`.";
 const FIVE_MINUTES_SECONDS = 60 * 5;
@@ -30,15 +31,14 @@ export async function verifySlackRequest(request: Request, env: Env, body: strin
   return timingSafeEqual(signature, `v0=${hex(digest)}`);
 }
 
-export function parseCommandDate(text: string, today = new Date()): string {
+export function parseCommandDate(text: string, now = new Date()): string {
   const normalized = text.trim().toLowerCase();
-  const base = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  const today = isoDateInZone(now, CAFETERIA_TZ);
   if (!normalized || normalized === "today") {
-    return isoDate(base);
+    return today;
   }
   if (normalized === "tomorrow") {
-    base.setUTCDate(base.getUTCDate() + 1);
-    return isoDate(base);
+    return addUtcDays(today, 1);
   }
   if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
     const parsed = new Date(`${normalized}T00:00:00Z`);
@@ -68,7 +68,7 @@ export function formatLunchResponse(result: LunchSpecialResult, now = new Date()
 }
 
 function dateLabel(targetDate: string, now: Date): string {
-  const today = isoDateUtc(now);
+  const today = isoDateInZone(now, CAFETERIA_TZ);
   const tomorrow = addUtcDays(today, 1);
   const weekday = weekdayName(targetDate);
   if (targetDate === today) return `today (${weekday}, ${targetDate})`;
@@ -77,20 +77,16 @@ function dateLabel(targetDate: string, now: Date): string {
 }
 
 function weekdayName(isoDate: string): string {
-  return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("en-US", {
+  return new Date(`${isoDate}T12:00:00Z`).toLocaleDateString("en-US", {
     weekday: "long",
-    timeZone: "UTC",
+    timeZone: CAFETERIA_TZ,
   });
-}
-
-function isoDateUtc(date: Date): string {
-  return date.toISOString().slice(0, 10);
 }
 
 function addUtcDays(isoDate: string, days: number): string {
   const date = new Date(`${isoDate}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);
-  return isoDateUtc(date);
+  return date.toISOString().slice(0, 10);
 }
 
 export async function postSlackMessage(env: Env, text: string): Promise<void> {

@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve as resolvePath } from "node:path";
+import { loadBundle } from "./_bundle.mjs";
 
 const HERE = dirname(new URL(import.meta.url).pathname);
 const ROOT = resolvePath(HERE, "..");
+const TZ_TS = join(ROOT, "src", "tz.ts");
 const DEV_VARS = join(ROOT, ".dev.vars");
+
+const { CAFETERIA_TZ, isoDateInZone } = await loadBundle(TZ_TS);
 
 const args = process.argv.slice(2);
 if (args.includes("-h") || args.includes("--help")) {
@@ -64,9 +68,9 @@ for (const menu of menus || []) {
 const lines = [];
 for (let i = 0; i < days; i += 1) {
   const date = addDays(start, i);
-  const weekday = new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", {
+  const weekday = new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", {
     weekday: "short",
-    timeZone: "UTC",
+    timeZone: CAFETERIA_TZ,
   });
   const special = byDate[date];
   lines.push(`${weekday} ${date}  ${special || "(no menu)"}`);
@@ -74,7 +78,7 @@ for (let i = 0; i < days; i += 1) {
 process.stdout.write(lines.join("\n") + "\n");
 
 function isoToday() {
-  return new Date().toISOString().slice(0, 10);
+  return isoDateInZone(new Date());
 }
 
 function addDays(iso, n) {

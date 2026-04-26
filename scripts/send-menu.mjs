@@ -1,15 +1,14 @@
 #!/usr/bin/env node
-import { readFileSync, existsSync, mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve as resolvePath } from "node:path";
-import { pathToFileURL } from "node:url";
-import esbuild from "esbuild";
 import PostalMime from "postal-mime";
+import { loadBundle } from "./_bundle.mjs";
 
 const HERE = dirname(new URL(import.meta.url).pathname);
 const ROOT = resolvePath(HERE, "..");
 const PARSER_TS = join(ROOT, "src", "menu-parser.ts");
 const SLACK_TS = join(ROOT, "src", "slack.ts");
+const TZ_TS = join(ROOT, "src", "tz.ts");
 const DEV_VARS = join(ROOT, ".dev.vars");
 
 const args = process.argv.slice(2);
@@ -44,6 +43,7 @@ if (!dryRun) {
 
 const { parseCafeteriaMenuEmail, isCafeteriaMenuSubject } = await loadBundle(PARSER_TS);
 const { formatLunchResponse } = await loadBundle(SLACK_TS);
+const { isoDateInZone } = await loadBundle(TZ_TS);
 
 const raw = readFileSync(emlPath, "utf8");
 const email = await PostalMime.parse(raw);
@@ -62,7 +62,7 @@ try {
   fail(`parse failed: ${error.message}`);
 }
 
-const targetDate = explicitDate || new Date().toISOString().slice(0, 10);
+const targetDate = explicitDate || isoDateInZone(new Date());
 const special = parsed.specialsByDate[targetDate] || null;
 if (!special) {
   const available = Object.keys(parsed.specialsByDate).sort().join(", ") || "(none)";
@@ -120,21 +120,6 @@ function loadDevVars(path) {
     out[key] = value;
   }
   return out;
-}
-
-async function loadBundle(entryPath) {
-  const built = await esbuild.build({
-    entryPoints: [entryPath],
-    bundle: true,
-    platform: "node",
-    format: "esm",
-    write: false,
-    logLevel: "silent",
-  });
-  const dir = mkdtempSync(join(tmpdir(), "send-menu-"));
-  const out = join(dir, "bundle.mjs");
-  writeFileSync(out, built.outputFiles[0].contents);
-  return import(pathToFileURL(out).href);
 }
 
 function fail(message) {
