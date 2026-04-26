@@ -1,12 +1,10 @@
 #!/usr/bin/env node
-import { readFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve as resolvePath } from "node:path";
 import { loadBundle } from "./_bundle.mjs";
 
 const HERE = dirname(new URL(import.meta.url).pathname);
 const ROOT = resolvePath(HERE, "..");
 const TZ_TS = join(ROOT, "src", "tz.ts");
-const DEV_VARS = join(ROOT, ".dev.vars");
 
 const { CAFETERIA_TZ, isoDateInZone } = await loadBundle(TZ_TS);
 
@@ -23,7 +21,7 @@ if (args.includes("-h") || args.includes("--help")) {
       "  --start YYYY-MM-DD  Start date (default: today)",
       "  --json              Print the raw /admin/menus payload instead",
       "",
-      "Reads WORKER_URL and ADMIN_TOKEN from .dev.vars or process env.",
+      "Reads WORKER_URL and ADMIN_TOKEN from process env.",
     ].join("\n") + "\n",
   );
   process.exit(0);
@@ -40,11 +38,10 @@ const start = flagValue("--start") ?? isoToday();
 if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) fail("--start must be YYYY-MM-DD");
 const asJson = args.includes("--json");
 
-const env = { ...loadDevVars(DEV_VARS), ...process.env };
-const url = (env.WORKER_URL || "").replace(/\/+$/, "");
-const token = env.ADMIN_TOKEN;
-if (!url) fail("WORKER_URL is not set (in .dev.vars or env)");
-if (!token) fail("ADMIN_TOKEN is not set (in .dev.vars or env)");
+const url = (process.env.WORKER_URL || "").replace(/\/+$/, "");
+const token = process.env.ADMIN_TOKEN;
+if (!url) fail("WORKER_URL is not set");
+if (!token) fail("ADMIN_TOKEN is not set");
 
 const response = await fetch(`${url}/admin/menus`, {
   headers: { authorization: `Bearer ${token}` },
@@ -85,24 +82,6 @@ function addDays(iso, n) {
   const d = new Date(`${iso}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
-}
-
-function loadDevVars(path) {
-  if (!existsSync(path)) return {};
-  const out = {};
-  for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq <= 0) continue;
-    const key = trimmed.slice(0, eq).trim();
-    let value = trimmed.slice(eq + 1).trim();
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1);
-    }
-    out[key] = value;
-  }
-  return out;
 }
 
 function fail(message) {

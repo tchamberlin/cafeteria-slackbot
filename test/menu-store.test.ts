@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ingestNormalizedMessage,
   loadDailyPost,
@@ -207,5 +207,157 @@ describe("daily post records", () => {
       channel: "C123",
     });
     expect(await loadDailyPost(testEnv, "2026-04-22")).toBeNull();
+  });
+});
+
+describe("menu store LLM hooks", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function llmEnv(): Env {
+    return {
+      MENU_STORE: new MemoryKV() as unknown as KVNamespace,
+      ALLOWED_SENDER: "cafeteria@example.com",
+      ANTHROPIC_API_KEY: "test-key",
+      LLM_PARSE_ENABLED: "true",
+    };
+  }
+
+  function regexFailingMessage(): NormalizedEmailMessage {
+    // No recognizable date pattern → resolveWeekStart throws CafeteriaMenuParseError.
+    return {
+      id: "message-llm-fallback",
+      messageId: "message-llm-fallback",
+      receivedAt: "2026-04-17T18:43:54.000Z",
+      from: "cafeteria@example.com",
+      to: "menus@example.com",
+      subject: "[Gbemploy] Next weeks cafeteria menu",
+      bodyText: "Lunch this coming week will rotate through staff favorites — see you in line.",
+      rawKey: "emails/raw/llm-fallback.eml",
+    };
+  }
+
+  function correctionMessageForLlm(): NormalizedEmailMessage {
+    return {
+      id: "message-llm-correction",
+      messageId: "message-llm-correction",
+      receivedAt: "2026-04-21T13:00:00.000Z",
+      from: "cafeteria@example.com",
+      to: "menus@example.com",
+      subject: "[Gbemploy] Slight change in todays menu",
+      bodyText: "Apologies — switch tuesday and thursday's lunch menus this week.",
+      rawKey: "emails/raw/llm-correction.eml",
+    };
+  }
+
+  function mockToolUse(toolInput: unknown) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            id: "msg_test",
+            content: [{ type: "tool_use", name: "record_menu", input: toolInput }],
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+  }
+
+  it("falls back to LLM when the regex parser throws", async () => {
+    const testEnv = llmEnv();
+    mockToolUse({
+      weekStart: "2026-04-20",
+      weekEnd: "2026-04-24",
+      specialsByDate: {
+        "2026-04-20": "Italian Sub",
+        "2026-04-21": "Potato Bar",
+        "2026-04-22": "Big Mac",
+        "2026-04-23": "Chicken Sandwich",
+        "2026-04-24": "Spaghetti",
+      },
+      sourceSubject: "[Gbemploy] Next weeks cafeteria menu",
+      correctionHint: false,
+    });
+
+    const result = await ingestNormalizedMessage(testEnv, regexFailingMessage());
+
+    expect(result).toMatchObject({ ignored: false, parsed: true, weekStart: "2026-04-20" });
+    expect(await loadLunchSpecial(testEnv, "2026-04-22")).toMatchObject({
+      status: "ok",
+      special: "Big Mac",
+    });
+  });
+
+  it("re-runs LLM and replaces regex output when correctionHint is true", async () => {
+    const testEnv = llmEnv();
+    // First seed the week with the original menu (regex path, no LLM call needed because correctionHint=false).
+    mockToolUse({
+      weekStart: "2026-04-20",
+      weekEnd: "2026-04-24",
+      specialsByDate: { "2026-04-20": "noop" },
+      sourceSubject: "noop",
+      correctionHint: false,
+    });
+    await ingestNormalizedMessage(testEnv, message("cafeteria@example.com"));
+
+    // Now ingest a correction. The regex matches "switch X and Y" hint pattern → correctionHint=true,
+    // so the LLM runs and its output replaces the (incomplete) regex result.
+    mockToolUse({
+      weekStart: "2026-04-20",
+      weekEnd: "2026-04-24",
+      specialsByDate: {
+        "2026-04-20": "Italian Sub",
+        "2026-04-21": "Chicken Sandwich",
+        "2026-04-22": "Big Mac",
+        "2026-04-23": "Potato Bar",
+        "2026-04-24": "Spaghetti",
+      },
+      sourceSubject: "[Gbemploy] Slight change in todays menu",
+      correctionHint: true,
+    });
+
+    const result = await ingestNormalizedMessage(testEnv, correctionMessageForLlm());
+
+    expect(result.parsed).toBe(true);
+    expect(result.followUp).toBe(true);
+    expect(result.becameAuthoritative).toBe(true);
+    // Tuesday and Thursday were swapped by the LLM relative to the seeded week.
+    expect(result.changedDates).toEqual(
+      expect.arrayContaining([
+        { date: "2026-04-21", previousSpecial: "Potato Bar", newSpecial: "Chicken Sandwich" },
+        { date: "2026-04-23", previousSpecial: "Chicken Sandwich", newSpecial: "Potato Bar" },
+      ]),
+    );
+    expect(await loadLunchSpecial(testEnv, "2026-04-21")).toMatchObject({ special: "Chicken Sandwich" });
+  });
+
+  it("falls through to parse-error when LLM is disabled and regex throws", async () => {
+    const testEnv: Env = {
+      MENU_STORE: new MemoryKV() as unknown as KVNamespace,
+      ALLOWED_SENDER: "cafeteria@example.com",
+      // LLM_PARSE_ENABLED unset
+    };
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const result = await ingestNormalizedMessage(testEnv, regexFailingMessage());
+
+    expect(result).toMatchObject({ ignored: false, parsed: false });
+    expect(result.error).toBeTruthy();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not call LLM when correctionHint is false and regex succeeds", async () => {
+    const testEnv = llmEnv();
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const result = await ingestNormalizedMessage(testEnv, message("cafeteria@example.com"));
+
+    expect(result.parsed).toBe(true);
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

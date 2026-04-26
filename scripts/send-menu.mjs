@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join, resolve as resolvePath } from "node:path";
 import PostalMime from "postal-mime";
 import { loadBundle } from "./_bundle.mjs";
@@ -9,7 +9,6 @@ const ROOT = resolvePath(HERE, "..");
 const PARSER_TS = join(ROOT, "src", "menu-parser.ts");
 const SLACK_TS = join(ROOT, "src", "slack.ts");
 const TZ_TS = join(ROOT, "src", "tz.ts");
-const DEV_VARS = join(ROOT, ".dev.vars");
 
 const args = process.argv.slice(2);
 if (args.length === 0 || args.includes("-h") || args.includes("--help")) {
@@ -21,7 +20,7 @@ if (args.length === 0 || args.includes("-h") || args.includes("--help")) {
       "  --date YYYY-MM-DD  Pick a specific date (default: today)",
       "  --dry-run          Print the message instead of posting to Slack",
       "",
-      "Reads SLACK_BOT_TOKEN and SLACK_CHANNEL_ID from .dev.vars or process env.",
+      "Reads SLACK_BOT_TOKEN and SLACK_CHANNEL_ID from process env.",
     ].join("\n") + "\n",
   );
   process.exit(args.length === 0 ? 1 : 0);
@@ -35,10 +34,10 @@ if (!emlPath) {
   fail("missing .eml path");
 }
 
-const env = { ...loadDevVars(DEV_VARS), ...process.env };
+const env = process.env;
 if (!dryRun) {
-  if (!env.SLACK_BOT_TOKEN) fail("SLACK_BOT_TOKEN is not set (in .dev.vars or env)");
-  if (!env.SLACK_CHANNEL_ID) fail("SLACK_CHANNEL_ID is not set (in .dev.vars or env)");
+  if (!env.SLACK_BOT_TOKEN) fail("SLACK_BOT_TOKEN is not set");
+  if (!env.SLACK_CHANNEL_ID) fail("SLACK_CHANNEL_ID is not set");
 }
 
 const { parseCafeteriaMenuEmail, isCafeteriaMenuSubject } = await loadBundle(PARSER_TS);
@@ -103,24 +102,6 @@ if (!response.ok || !payload?.ok) {
   fail(`Slack chat.postMessage failed: ${payload?.error || `http_${response.status}`}`);
 }
 process.stdout.write(`posted to ${env.SLACK_CHANNEL_ID} (ts=${payload.ts})\n`);
-
-function loadDevVars(path) {
-  if (!existsSync(path)) return {};
-  const out = {};
-  for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq <= 0) continue;
-    const key = trimmed.slice(0, eq).trim();
-    let value = trimmed.slice(eq + 1).trim();
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1);
-    }
-    out[key] = value;
-  }
-  return out;
-}
 
 function fail(message) {
   process.stderr.write(`error: ${message}\n`);

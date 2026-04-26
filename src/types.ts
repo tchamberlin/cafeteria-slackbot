@@ -6,6 +6,9 @@ export interface Env {
   SLACK_CHANNEL_ID?: string;
   SLACK_ADMIN_CHANNEL_ID?: string;
   ADMIN_TOKEN?: string;
+  ANTHROPIC_API_KEY?: string;
+  LLM_PARSE_ENABLED?: string;
+  LLM_MODEL?: string;
 }
 
 export interface PostedMenuRecord {

@@ -10,6 +10,7 @@
     "parse": "node scripts/parse-eml.mjs",
     "send": "node scripts/send-menu.mjs",
     "menu": "node scripts/show-menu.mjs",
+    "ingest-sim": "node scripts/simulate-ingest.mjs",
     "lint": "npm run typecheck && npm run test && wrangler deploy --dry-run"
   },
   "dependencies": {

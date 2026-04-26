@@ -6,10 +6,12 @@ import {
   type MenuCandidate,
   type MenuChange,
   type NormalizedEmailMessage,
+  type ParsedCafeteriaMenu,
   type PostedMenuRecord,
   type StoredWeekMenu,
 } from "./types";
 import { isCafeteriaMenuSubject, parseCafeteriaMenuEmail } from "./menu-parser";
+import { parseCafeteriaMenuWithLlm } from "./llm-parser";
 
 export const EMAIL_INDEX_KEY = "emails:index";
 export const MENU_INDEX_KEY = "menus:index";
@@ -41,11 +43,40 @@ export async function ingestNormalizedMessage(
   }
 
   try {
-    const parsed = parseCafeteriaMenuEmail(
-      message.subject,
-      message.bodyText,
-      message.receivedAt,
-    );
+    let parsed: ParsedCafeteriaMenu;
+    try {
+      parsed = parseCafeteriaMenuEmail(
+        message.subject,
+        message.bodyText,
+        message.receivedAt,
+      );
+    } catch (regexError) {
+      if (!isLlmEnabled(env)) {
+        throw regexError;
+      }
+      parsed = await parseCafeteriaMenuWithLlm(
+        env,
+        message.subject,
+        message.bodyText,
+        message.receivedAt,
+        message.id,
+      );
+    }
+
+    if (parsed.correctionHint && isLlmEnabled(env)) {
+      try {
+        parsed = await parseCafeteriaMenuWithLlm(
+          env,
+          message.subject,
+          message.bodyText,
+          message.receivedAt,
+          message.id,
+        );
+      } catch {
+        // LLM failed on a correction email — keep the regex result rather than nothing.
+      }
+    }
+
     const candidate: MenuCandidate = {
       weekStart: parsed.weekStart,
       weekEnd: parsed.weekEnd,
@@ -164,6 +195,9 @@ export async function reparseStoredMessages(env: Env): Promise<{ messages: numbe
   const candidatesByWeek = new Map<string, MenuCandidate[]>();
   let errors = 0;
 
+  // Reparse intentionally uses regex only — LLM hooks live in ingestNormalizedMessage.
+  // Reparse is an admin one-shot for replaying after parser changes; sweeping the corpus
+  // through the LLM would silently spend budget on a manual operation.
   for (const message of messages) {
     if (!isCafeteriaMenuSubject(message.subject)) {
       continue;
@@ -223,6 +257,10 @@ export async function storeRawEmail(
   const key = `emails/raw/${receivedAt.replace(/[:.]/g, "-")}-${safeKey(id)}.eml`;
   await env.MENU_STORE.put(key, raw);
   return key;
+}
+
+function isLlmEnabled(env: Env): boolean {
+  return env.LLM_PARSE_ENABLED === "true" && Boolean(env.ANTHROPIC_API_KEY);
 }
 
 export function isAllowedSender(env: Env, sender: string | null): boolean {

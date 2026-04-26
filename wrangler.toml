@@ -16,6 +16,12 @@ crons = ["0 13 * * 1-5"]
 enabled = true
 invocation_logs = true
 
+# Plain-text vars (visible in toml + dashboard, override the in-code default).
+# LLM_MODEL switches the Anthropic model used by parseCafeteriaMenuWithLlm
+# without re-deploying — bump to claude-haiku-4-6-* / claude-sonnet-4-6-* etc.
+[vars]
+LLM_MODEL = "claude-haiku-4-5-20251001"
+
 # Set this to the exact cafeteria sender address in Cloudflare dashboard vars
 # or with `wrangler secret put ALLOWED_SENDER`.
 # ALLOWED_SENDER = "cafeteria@example.com"
