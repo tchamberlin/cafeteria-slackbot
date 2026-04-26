@@ -4,7 +4,7 @@ compatibility_date = "2026-04-26"
 
 [[kv_namespaces]]
 binding = "MENU_STORE"
-id = "replace-with-kv-namespace-id"
+id = "c5037d8b0cab4e06bd96e69bb9919cce"
 
 # Daily channel post. Cron runs in UTC.
 # 13:00 UTC = 9:00 EDT / 8:00 EST. Bump to "0 14 * * *" during EST if you care.
