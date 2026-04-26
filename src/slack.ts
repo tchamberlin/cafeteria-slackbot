@@ -71,8 +71,8 @@ function dateLabel(targetDate: string, now: Date): string {
   const today = isoDateUtc(now);
   const tomorrow = addUtcDays(today, 1);
   const weekday = weekdayName(targetDate);
-  if (targetDate === today) return `today (${weekday})`;
-  if (targetDate === tomorrow) return `tomorrow (${weekday})`;
+  if (targetDate === today) return `today (${weekday}, ${targetDate})`;
+  if (targetDate === tomorrow) return `tomorrow (${weekday}, ${targetDate})`;
   return `${weekday} (${targetDate})`;
 }
 

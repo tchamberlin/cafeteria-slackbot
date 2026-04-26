@@ -1,6 +1,7 @@
 name = "gbo-cafeteria-menu"
 main = "src/index.ts"
 compatibility_date = "2026-04-26"
+preview_urls = true
 
 [[kv_namespaces]]
 binding = "MENU_STORE"
@@ -10,6 +11,10 @@ id = "c5037d8b0cab4e06bd96e69bb9919cce"
 # 13:00 UTC = 9:00 EDT / 8:00 EST. Bump to "0 14 * * *" during EST if you care.
 [triggers]
 crons = ["0 13 * * *"]
+
+[observability.logs]
+enabled = true
+invocation_logs = true
 
 # Set this to the exact cafeteria sender address in Cloudflare dashboard vars
 # or with `wrangler secret put ALLOWED_SENDER`.
