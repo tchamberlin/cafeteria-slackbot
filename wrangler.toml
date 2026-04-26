@@ -1,0 +1,11 @@
+name = "gbo-cafeteria-menu"
+main = "src/index.ts"
+compatibility_date = "2026-04-26"
+
+[[kv_namespaces]]
+binding = "MENU_STORE"
+id = "replace-with-kv-namespace-id"
+
+# Set this to the exact cafeteria sender address in Cloudflare dashboard vars
+# or with `wrangler secret put ALLOWED_SENDER`.
+# ALLOWED_SENDER = "cafeteria@example.com"

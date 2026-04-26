@@ -1,0 +1,318 @@
+Received: from DM6PR14MB3946.namprd14.prod.outlook.com (::1) by
+ PH6PR14MB958160.namprd14.prod.outlook.com with HTTPS; Fri, 24 Apr 2026
+ 17:56:29 +0000
+Received: from SJ0PR03CA0353.namprd03.prod.outlook.com (2603:10b6:a03:39c::28)
+ by DM6PR14MB3946.namprd14.prod.outlook.com (2603:10b6:5:21d::10) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9846.22; Fri, 24 Apr
+ 2026 17:56:25 +0000
+Received: from SJ1PEPF00001CE1.namprd05.prod.outlook.com
+ (2603:10b6:a03:39c:cafe::a1) by SJ0PR03CA0353.outlook.office365.com
+ (2603:10b6:a03:39c::28) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.20.9846.23 via Frontend Transport; Fri,
+ 24 Apr 2026 17:56:24 +0000
+Authentication-Results: spf=softfail (sender IP is 146.88.9.34)
+ smtp.mailfrom=listmgr.nrao.edu; dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=listmgr.nrao.edu;
+Received-SPF: SoftFail (protection.outlook.com: domain of transitioning
+ listmgr.nrao.edu discourages use of 146.88.9.34 as permitted sender)
+Received: from mail.ad.nrao.edu (146.88.9.34) by
+ SJ1PEPF00001CE1.mail.protection.outlook.com (10.167.242.9) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.9846.18 via Frontend Transport; Fri, 24 Apr 2026 17:56:23 +0000
+Received: from aocexcha.ad.nrao.edu (146.88.9.34) by aocexcha.ad.nrao.edu
+ (146.88.9.34) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.2562.17; Fri, 24 Apr
+ 2026 10:56:20 -0700
+Received: from ermail01.cv.nrao.edu (192.33.115.100) by aocexcha.ad.nrao.edu
+ (146.88.9.34) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.2562.17 via Frontend
+ Transport; Fri, 24 Apr 2026 10:56:19 -0700
+Received: from cv3.cv.nrao.edu (cv3.cv.nrao.edu [192.33.115.2])
+	by ermail01.cv.nrao.edu (8.14.7/8.14.7/smtp-deliveryhost-8.14) with ESMTP id 63OHuJfP016282
+	(version=TLSv1/SSLv3 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NO);
+	Fri, 24 Apr 2026 13:56:19 -0400
+X-Spam-Status: No
+X-MailScanner-From: gbemploy-bounces@listmgr.nrao.edu
+X-NRAO-CV-MailScanner-SpamCheck: not spam, SpamAssassin (not cached,
+	score=-99.749, required 5, autolearn=disabled, HTML_MESSAGE 1.25,
+	MAILING_LIST_MULTI -1.00, NRAO_HEADER_PRESENT -100.00,
+	SPF_HELO_NONE 0.00, SPF_PASS -0.00, URIBL_DBL_BLOCKED 0.00)
+X-MailScanner: Found to be clean
+X-MailScanner-Information: Please contact postmaster@cv.nrao.edu for more information
+Received: from agenda.cv.nrao.edu (agenda.cv.nrao.edu [192.33.115.7])
+	by cv3.cv.nrao.edu (8.14.7/8.14.7) with ESMTP id 63OHu30S013369
+	(version=TLSv1/SSLv3 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NO);
+	Fri, 24 Apr 2026 13:56:03 -0400
+Received: from agenda.cv.nrao.edu (localhost [127.0.0.1])
+	by agenda.cv.nrao.edu (8.14.7/8.14.7) with ESMTP id 63OHu355021497;
+	Fri, 24 Apr 2026 13:56:03 -0400
+Received: from ermail01.cv.nrao.edu (ermail01.cv.nrao.edu [192.33.115.100])
+ by agenda.cv.nrao.edu (8.14.7/8.14.7) with ESMTP id 63OHu2ko021493
+ for <gbemploy@listmgr.nrao.edu>; Fri, 24 Apr 2026 13:56:02 -0400
+Received: from cv3.cv.nrao.edu (cv3.cv.nrao.edu [192.33.115.2])
+ by ermail01.cv.nrao.edu (8.14.7/8.14.7/smtp-deliveryhost-8.14) with ESMTP id
+ 63OHu2OY016133
+ (version=TLSv1/SSLv3 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NO)
+ for <gbemploy@nrao.edu>; Fri, 24 Apr 2026 13:56:02 -0400
+X-Spam-Status: No
+X-MailScanner-From: dhonnor@nrao.edu
+X-NRAO-CV-MailScanner-SpamCheck: not spam, SpamAssassin (not cached,
+ score=-196.697, required 5, autolearn=disabled, DKIM_SIGNED 0.10,
+ DKIM_VALID -0.01, HTML_MESSAGE 1.25, NRAO_HEADER_PRESENT -100.00,
+ RCVD_DOTEDU_SHORT 1.00, SPF_HELO_NONE 0.00, SPF_SOFTFAIL 0.97,
+ USER_IN_WELCOMELIST -0.01, USER_IN_WHITELIST -100.00)
+X-MailScanner: Found to be clean
+X-MailScanner-Information: Please contact postmaster@cv.nrao.edu for more
+ information
+X-NRAO-Sekrit: 3C273
+Received: from EHYBRID.ad.nrao.edu (ehybrid.ad.nrao.edu [192.33.115.70])
+ by cv3.cv.nrao.edu (8.14.7/8.14.7) with ESMTP id 63OHtnRp013293
+ (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256 verify=OK)
+ for <gbemploy@nrao.edu>; Fri, 24 Apr 2026 13:55:49 -0400
+Received: from EHYBRID.ad.nrao.edu (192.33.115.70) by EHYBRID.ad.nrao.edu
+ (192.33.115.70) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id 15.1.2507.61; Fri, 24 Apr
+ 2026 13:55:34 -0400
+Received: from DM2PR04CU003.outbound.protection.outlook.com (40.93.13.58) by
+ EHYBRID.ad.nrao.edu (192.33.115.70) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.61 via Frontend Transport; Fri, 24 Apr 2026 13:55:34 -0400
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=w3cFuf/r21e06zpXAxU94CawmmlLmlbV6xEYtPoyXy/KzvyrP3PjAWgVBPrLw6JuBaWhNtzwVdJsFJ5sjZx2icVx5iknwMtGEQwm9WuYWN5z0F0IdlviAC4w83YyDg6K5QTNxGLScJ5R8RPISDyRLF+0EqGUm5qCJcCI+f3HfEoviKP3+2zE3O+9qxF+5cXkkTVIi6wP+rIei6Tk/v3zXegQafm5pqWd5nb7fJmvfaQ35G1AHDut9JQ0wUYft4gtPWowDhOZf1xM6XDrRt+hy3UqDHdJi8G0wvAW5Au0uMT1tRGCWiGZU1jlwZP8PmZ5MciluQijs1jwMvgXZ29oCQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com; 
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=9hji7ianNHsH4R/TSaUzRGETKpoH77t5Qm24Ux/KdY8=;
+ b=Elb9hk7LiVjkqxJpHHtbYzlBxMX8kbydgYszkw9YmFkNVYE40Izr4WAgPLlxQvVP0Fo7PMbUJPtqkcIsdVwu4DeMVtf3M01xd4bm7NEPJ33MhnVpLZxrSb9zeSYduA+m8ZWYQx2wkA0LjOpjeIlSsbK5X0bmqBpFSC2m4gQxRRZzAegB/Wu/ZsNMtzVb/DNiivQyMt017TE6tsowwBQeOj26yL4W8YEFDQPE78UR4pLcPRiRgrx2HpyWxA/0T/zFfflCw5GBn6R8peW07rJsVFsAKrMysRoOVx1JDrUHmzhVrTsk+UMuG2dHFMO/281Rxx3F63siLOWTFVZUw5Amqw==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=nrao.edu; dmarc=pass action=none header.from=nrao.edu;
+ dkim=pass header.d=nrao.edu; arc=none
+Received: from PH8PR14MB5900.namprd14.prod.outlook.com (2603:10b6:510:1c7::19)
+ by MW4PR14MB5280.namprd14.prod.outlook.com (2603:10b6:303:184::18)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9846.22; Fri, 24 Apr
+ 2026 17:55:31 +0000
+Received: from PH8PR14MB5900.namprd14.prod.outlook.com
+ ([fe80::343d:fe06:a44c:2993]) by PH8PR14MB5900.namprd14.prod.outlook.com
+ ([fe80::343d:fe06:a44c:2993%5]) with mapi id 15.20.9846.021; Fri, 24 Apr 2026
+ 17:55:31 +0000
+Message-ID: <f84f3b15-32c4-4e81-add5-fbe3a5800092@nrao.edu>
+Date: Fri, 24 Apr 2026 13:55:29 -0400
+User-Agent: Mozilla Thunderbird
+Content-Language: en-US
+To: <gbemploy@nrao.edu>
+X-ClientProxiedBy: BN9PR03CA0151.namprd03.prod.outlook.com
+ (2603:10b6:408:f4::6) To PH8PR14MB5900.namprd14.prod.outlook.com
+ (2603:10b6:510:1c7::19)
+X-MS-TrafficTypeDiagnostic: PH8PR14MB5900:EE_|MW4PR14MB5280:EE_|SJ1PEPF00001CE1:EE_|DM6PR14MB3946:EE_|PH6PR14MB958160:EE_
+X-MS-Office365-Filtering-Correlation-Id: 31b05ebf-9385-45eb-a125-08dea22acd26
+X-LD-Processed: 76999309-9e36-444d-bc21-0500ec3cfa17,ExtAddr
+X-Microsoft-Antispam-Untrusted: BCL:0;
+ ARA:13230040|366016|56012099003|18002099003|8096899003|41050700001; 
+X-Microsoft-Antispam-Message-Info-Original: W9d/fRaokq6V1DFEi3ZuXqrJd8EvkFQFuPxBngxzcOnQ155Ji4ArgN8xWyb/JUaB/JxaYCyaaCARHoqnLBeDnEswQZJAsKw2siSo3yD0BL192hdVS1je2W6p8X5ihDgz8HW+uV8IMi7fq3hvABznF6UznkH1GoosAYAoGdakmwTRa/qebVFDPRkNk3UxgKbAEMRGIp8FWwdBDPwK9Jc/Xb2USG2LTzBhBrRBMwowCsN4Kwdl1xCUnFd2et5tgv5JK0htoeFhXQA6Kie/yGvmyf2sQmZoNWg9q5unGnr+yw5FYhH8qKYmBfIKMAnKiGNwqeD09LC6qQsO4/C6N7fJbhIA7/h9Y5aOQ2Jh3kmMJZOqWQ0QL6PXCRvy/o3f94UUXGq15sd4+KQNcy3ebs6aVWUlQrDN/AK1lHDulsZSBTCSBA0tLQZND7feSN0YMwjsXFEPRacpreuxlbtIy9iOm4CtNtXlWYSw3iewSmuUbhw91EE+bzuhxfBdwExC0iQQKEwK6ubWd3lsdFkDw0wDjoNR3sD+V0czJdgYKyTlDlMlZlbTXBjiys8njEkYeoBOUKJxahZhb9aDbEgxBB4G0+G04e7C4ICbhS/K/K9J1uva1V1jET2I/WQbu6acJtwJhRDle8sCY+MblpAhqoxT4DVVrLioXVzPEqZ337rYQSfgZZO3iYa8iH3iy/Y0OvlqzgmgrT27x1G/EipGBv/vy5mW38Ga5hAVApEVnMhKejg=
+X-Forefront-Antispam-Report-Untrusted: CIP:255.255.255.255; CTRY:; LANG:en;
+ SCL:1; SRV:; IPV:NLI; SFV:NSPM; H:PH8PR14MB5900.namprd14.prod.outlook.com;
+ PTR:; CAT:NONE;
+ SFS:(13230040)(366016)(56012099003)(18002099003)(8096899003)(41050700001);
+ DIR:INT; 
+X-Exchange-RoutingPolicyChecked: KYvxZrSFOZIK6dq1dt/UYhFJYSgPq1fM/KxxnD9BdsNP/rBXKeuE9J5JFGewHF10ThjTZMBvyAjSzIxi+7zNk7HeZFi5kBc2g/lqFwy7qjBFSkjrm6bTiVrqjvnDtRWeNFlQEHQoLSwox2tkfcwr+wgJxvlQKzwqJXxu2ZEwlJus0Gbhxkq42c14Mjnb3Lc7FAzjxL5GTPEpaKSoIojdRB4zTW2qLMLFHlVjHVdp3MW3PSe5wo9yL47Hz2DN/mHBDQdpj6T7SYvqEXezBy60Fzi9+7b+5u+Y8AInlnZQz0UPBum1LxDARz9UjrcuID9u1l5p8ctB9udH045bhWl8Cg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: MW4PR14MB5280
+X-OrganizationHeadersPreserved: MW4PR14MB5280.namprd14.prod.outlook.com
+X-CrossPremisesHeadersPromoted: EHYBRID.ad.nrao.edu
+X-CrossPremisesHeadersFiltered: EHYBRID.ad.nrao.edu
+X-CrossPremisesHeadersFilteredBySendConnector: EHYBRID.ad.nrao.edu
+X-OrganizationHeadersPreserved: EHYBRID.ad.nrao.edu
+Subject: [Gbemploy] Next weeks cafeteria menu
+X-BeenThere: gbemploy@listmgr.nrao.edu
+X-Mailman-Version: 2.1.34
+Precedence: list
+List-Id: Autogen list of GreenBank employees <gbemploy.listmgr.nrao.edu>
+List-Unsubscribe: <https://listmgr.nrao.edu/mailman/options/gbemploy>,
+ <mailto:gbemploy-request@listmgr.nrao.edu?subject=unsubscribe>
+List-Archive: <https://listmgr.nrao.edu/mailman/private/gbemploy/>
+List-Post: <mailto:gbemploy@listmgr.nrao.edu>
+List-Help: <mailto:gbemploy-request@listmgr.nrao.edu?subject=help>
+List-Subscribe: <https://listmgr.nrao.edu/mailman/listinfo/gbemploy>,
+ <mailto:gbemploy-request@listmgr.nrao.edu?subject=subscribe>
+From: Doug Honnor via Gbemploy <gbemploy@listmgr.nrao.edu>
+Reply-To: Doug Honnor <dhonnor@nrao.edu>
+Content-Type: multipart/mixed;
+	boundary="===============5932210608457862602=="
+Errors-To: gbemploy-bounces@listmgr.nrao.edu
+Sender: Gbemploy <gbemploy-bounces@listmgr.nrao.edu>
+Return-Path: gbemploy-bounces@listmgr.nrao.edu
+X-OrganizationHeadersPreserved: aocexcha.ad.nrao.edu
+X-MS-Exchange-Organization-ExpirationStartTime: 24 Apr 2026 17:56:24.7376
+ (UTC)
+X-MS-Exchange-Organization-ExpirationStartTimeReason: OriginalSubmit
+X-MS-Exchange-Organization-ExpirationInterval: 1:00:00:00.0000000
+X-MS-Exchange-Organization-ExpirationIntervalReason: OriginalSubmit
+X-MS-Exchange-Organization-Network-Message-Id: 31b05ebf-9385-45eb-a125-08dea22acd26
+X-EOPAttributedMessage: 0
+X-MS-Exchange-Organization-MessageDirectionality: Originating
+X-CrossPremisesHeadersPromoted: SJ1PEPF00001CE1.namprd05.prod.outlook.com
+X-CrossPremisesHeadersFiltered: SJ1PEPF00001CE1.namprd05.prod.outlook.com
+X-MS-Exchange-Transport-CrossTenantHeadersStripped: SJ1PEPF00001CE1.namprd05.prod.outlook.com
+X-MS-PublicTrafficType: Email
+X-MS-Exchange-Organization-AuthSource: aocexcha.ad.nrao.edu
+X-MS-Exchange-Organization-AuthAs: Anonymous
+X-OriginatorOrg: ad.nrao.edu
+X-MS-Office365-Filtering-Correlation-Id-Prvs: d41d663e-39e9-4024-f2d6-08dea22aad0f
+X-MS-Exchange-Organization-SCL: -1
+X-Microsoft-Antispam: BCL:0;ARA:13230040|6049299003|82310400026|4022899009|35042699022|2092899012|12012899012|21082099003|18002099003|16102099003|57112099003|4053099003|8096899003;
+X-Forefront-Antispam-Report: CIP:146.88.9.34;CTRY:US;LANG:en;SCL:-1;SRV:;IPV:NLI;SFV:SKN;H:mail.ad.nrao.edu;PTR:aocexcha.ad.nrao.edu;CAT:NONE;SFS:(13230040)(6049299003)(82310400026)(4022899009)(35042699022)(2092899012)(12012899012)(21082099003)(18002099003)(16102099003)(57112099003)(4053099003)(8096899003);DIR:INB;
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 24 Apr 2026 17:56:23.8161
+ (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 31b05ebf-9385-45eb-a125-08dea22acd26
+X-MS-Exchange-CrossTenant-Id: 76999309-9e36-444d-bc21-0500ec3cfa17
+X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=76999309-9e36-444d-bc21-0500ec3cfa17;Ip=[146.88.9.34];Helo=[mail.ad.nrao.edu]
+X-MS-Exchange-CrossTenant-AuthSource: aocexcha.ad.nrao.edu
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR14MB3946
+X-MS-Exchange-Transport-EndToEndLatency: 00:00:05.4205011
+X-MS-Exchange-Processed-By-BccFoldering: 15.20.9846.017
+X-Microsoft-Antispam-Mailbox-Delivery:
+	ucf:1;jmr:0;auth:0;dest:C;OFR:CustomRules;ENG:(910005)(944506478)(944626604)(920097)(930201)(20251009189)(140003);
+X-Microsoft-Antispam-Message-Info:
+	=?utf-8?B?WmthZGRsSWZtTytvdlNrcHY1TGVZVUVsTVJidUpvcGgwZ1FGU3JpRmkxUGdy?=
+ =?utf-8?B?VEd6SUhmMldlSFU1c280WDVhVUlrUHZjbWFmWXdMelVBMlZva0w4Yk1adGh6?=
+ =?utf-8?B?VFdFRDlwWkw3Q2szaGROZitaclVyUDBHeGZid1ZqN2dOby96RkZLMkRUdm80?=
+ =?utf-8?B?VHE0Z280dU90QVYvZnNrYmJCMnRaemh0RWU5SEM4Z1ZQWWJpVDVXK3B6MDFs?=
+ =?utf-8?B?ekc1RGsyV0RlV3lnOUJBaHc4ak5pWUFEU0ZhYjdEdHBPaWN2bys1YjdKRW9M?=
+ =?utf-8?B?dUpkK3dRSG5UOEV5T2svWENnek5RV1J4bFFCMFZwT1VFV1hKTHhlR2RjMHFi?=
+ =?utf-8?B?RXZYM2oyQ2Vmc2dQbGdCcG5XMWF5ZWx3enQ5TS9BM0VEd1VJN3lLbk5EQTBa?=
+ =?utf-8?B?Wm9GTFBjZ2FhU25wU0lzak5qVitwQlI3ZmljeDdMUXI4ZlJYWXRWUTRxWlZM?=
+ =?utf-8?B?dDFERG5FNEx2M25KcVVmRUx4UGVSN2xlVHdVZ3VKc3J6dUkxc3ZUQ2JPS1NN?=
+ =?utf-8?B?MDNJb01JbC9sTUp5MGNtMzhPK2hJelhVTlN1RjVWYmVxdmx4UWp3UFdhaWJt?=
+ =?utf-8?B?eTVYL0tyd2tDWTZKYmdFYThQV0U3MVR3WThjYVpSUEtmRlVZVU1EbEh5ZE5E?=
+ =?utf-8?B?K1RJeFMrSzBVNWlGYXZ0dHpSd3Rqdm41eGxBT0xpUkVVK2g3VEp4ZlpjOVdy?=
+ =?utf-8?B?UFo5Zy9TdzdNNWZ5M055RWtpaFAxVWRKS1FiU283VmFabUVGakxBREJPRVJz?=
+ =?utf-8?B?eDlFSEY4N1dDaXVDVko4ZGIyUEMrUW5OVGxHTFZyYVhNdUxLUG1uTm9UUVZC?=
+ =?utf-8?B?eGZUaTdGS1kwTEEzTzBBUTUwd2M0ZTdWUmZTSG9mbEZjekpEU1U1OWZGMG8w?=
+ =?utf-8?B?bERVemIxU3BINlJkYVEzVUdkRXRUbEl6UzdTQ0R0eFlyVkJDM1VvM0hHQWox?=
+ =?utf-8?B?VXJRdmRtNFEydGhjQ0h4WFduYWVEZUJtZ2hzSDkzUDFJOFhMQXQyaVZEL2ZM?=
+ =?utf-8?B?SXpzVlJhSFBFamphV1BTQyt2NHcvVVNIK0pGMHd2QXM2S1dGUVR0WVJIQ2ho?=
+ =?utf-8?B?QmdGRXlJL2hiUEdzWm43bGoyY3hQL1RPUDh2SllBZjE5dHkvMFdDeXQ3YzJN?=
+ =?utf-8?B?RnBaMUpvaWEweGdRaHdhYWtaWThOSWNDOVRSV1d5eXVxWkpKZm9namVibU5B?=
+ =?utf-8?B?STlLNnZhdldnczVRUmlIMlZkZGcvTUZvY1g5SmlleXlNU1UxWnZzYWZ2aUtZ?=
+ =?utf-8?B?Zlo2aHF5aEZYbVlrclU5Q2pyNTJIOW4rN256amIwR21td3AvaDd5Qy8xUGZP?=
+ =?utf-8?B?bC9YSTFtbjlDRDZmQUE2NDFqYWFxbjlCUzlwc2NjWDl0SUxRTWV0aWZDUXl1?=
+ =?utf-8?B?K1pNdlVxY3VQZlZXUkZQNDZuT2thVUFXWHlud2FLRmtjS1BjeEZYRGc3VkU4?=
+ =?utf-8?B?WXRwMnFNMG93UGg4RTR5YkNGWnVuaWNFWXBFYXJzZUFHNDBVS2V5ck82SGtq?=
+ =?utf-8?B?WjBoT2pSdXdZOWsycm44aVRYMEp1Ty9LQ2YyVTZjRFA4cTBRK2tuTS83YTdF?=
+ =?utf-8?B?VWdYYVpuaFFlUnJ1ck9aZnU1dEVCSHFMdzMxWFY5YXlkVldVdkVDd3FKaHcw?=
+ =?utf-8?B?SWdSSDFMWWVMdXJiN0dDMjBKejR6QS84a0lvaTVuYzUzVmkrZjNtZUlBV084?=
+ =?utf-8?B?dXlvU3VZQjRLQnA5dk5mWEVGZ3hDdUFreGdFbEM0cFBxSXUvV3lOUVZLNk1Y?=
+ =?utf-8?B?am5rQnlpS1JoMHVDWWFxcm1CQ0hnajh4SUF4dmVycS80dzgyN2pMdDQyZkxE?=
+ =?utf-8?B?anRJV0FrNEtNRjB3bUFISWcwVUtZTzZIM0JuT0o0WlR3b2Y5NU1BSjJoaEdi?=
+ =?utf-8?B?SCtCTUZDNENRZTFsWHpBMTB5Mlk0M0dJb1dSVCtad2FvSGdhYU5UZkYvU0Q1?=
+ =?utf-8?B?Vk1kMkxSNDdmWnNkK3A3Y1FLNHNOWEpVRjhORXljV0RiTEtSc0NYUUZVbm11?=
+ =?utf-8?B?cXpzNk9ZQWtSQUwzUVRBVlFNaFdxU1Bzb1lGSFN6a0IzZzBBQmJqenZPWEl2?=
+ =?utf-8?B?MHI3OVhxZThlUDdFZ3FxM1BOZ1pHa2ZadGh2d2FCTk9Fd0hFdnJXRG5KZTBs?=
+ =?utf-8?B?ZThSeVIzQUpzOWR1YnlpdExKNmpzSzRRNk1wbVdGY0pqa3JKRU10Q1BnSFhp?=
+ =?utf-8?B?SUhDZlpBaE56VE03VFkxLzNtOWg0RCtLek00VjVzaVFKNzNhRE1yNmV6cEhC?=
+ =?utf-8?B?bGsxbWRPVHlUL1hHS28zUVdNc3JYY3hsV1RPTWxGcWNNbTFtc1dSdFFERGxu?=
+ =?utf-8?B?SW1GNDhqTEVTYTI4bXN5S2tGRTI1VTQzU0owdWllWlE2NlNvUGM4dkZwRmN0?=
+ =?utf-8?B?SUh0R2ZTNklEdld3dFBEbXdPNlpoMzJmWmlDbjd2cDFZeUdVbTE3OE1RV0JB?=
+ =?utf-8?B?dUVaazVLc3pOaUN0RWlGRWhhcFFPa091b1ZOV0NKVXdXWEQ3c0Y2WkI5aHVF?=
+ =?utf-8?B?S3FoaHNmZHZUOUloWHRRTmdQZ0lrNVEycVJJYll1YmhKMm9UbGc2OG1LWUEr?=
+ =?utf-8?B?OEthVDA5MVpIL0xNMDV3eDBrYWNZQUZYTzE5YlI2L1VoUWlmNGo4ZHVOT1d0?=
+ =?utf-8?B?eVlyOFdsR3liZ3daWVQ4YUc2cHJaT3k0NU9kVzQxbDQzeVFVVGpYVC8ralRC?=
+ =?utf-8?B?Tmg1TkpFZXBSemFpemwvVFJ4SnFZOVZLeEkxcDhhL0paSnVDKzY2UjZEdkQv?=
+ =?utf-8?B?ZlpTMEJlYUZhVEM3VzVyQlgwNzZLYnhzY0ZQbkQ0S2hZV2FFUGtGNnB1ZSti?=
+ =?utf-8?B?Q2lHSnVwSmZjMlVURjVtWHREMGN0OTFxRkF6LzE0ODVjejh4YXpUODBvbWlp?=
+ =?utf-8?B?NkFQcnI2R0ZqUTM1NVZIb1ZZb0Y1WE5zQmNIanl4dnJ0ZUxwTFRnMTlyVkNG?=
+ =?utf-8?B?TkJaYzVpSUJjVk1oVnBNTTFPNlo4cEdSRFBILzVBZWlMZTJ5L0RlK21BQXRD?=
+ =?utf-8?B?c2pTazVQb2REcWZ4SjNlR1pkaVhsSEV6cUgvNi8rMm5NazcvWGJmWXBEZXlI?=
+ =?utf-8?B?Tk9NRE5VR2o5TlJUUW16OUZvRGpQTjEyYk9sMTJRUjN6QUE3SGlxdTRwRTN3?=
+ =?utf-8?Q?+LuxC5JgK?=
+MIME-Version: 1.0
+
+--===============5932210608457862602==
+Content-Type: multipart/alternative;
+	boundary="------------5GK8giPcjT2T7BYZZDcF2zae"
+Content-Language: en-US
+
+--------------5GK8giPcjT2T7BYZZDcF2zae
+Content-Type: text/plain; charset="UTF-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+
+/*GBO Cafeteria Menu*/
+
+/April 27th-May 1st/
+
+/
+/
+
+/*Monday:* Breaded Chicken Tenders, mashed potatoes with country gravy 
+and corn/
+
+/
+/
+
+/*Tuesday:* Grilled Beef and Bean Burrito with chips and salsa/
+
+/
+/
+
+/*Wednesday:* Chef Salad with bread sticks/
+
+/
+/
+
+/*Thursday:* Chicken Breast Sandwich with melted provolone served with 
+house made chips/
+
+/
+/
+
+/*Friday:* Spinach and Mushroom Quesadillas served with black bean salad/
+
+--------------5GK8giPcjT2T7BYZZDcF2zae
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  </head>
+  <body>
+    <p align="center"><i><font size="5"><b>GBO Cafeteria Menu</b></font></i></p>
+    <p align="center"><i><font size="5">April 27th-May 1st</font></i></p>
+    <p align="center"><i><font size="5"><br>
+        </font></i></p>
+    <p align="center"><i><font size="5"><b>Monday:</b> Breaded Chicken
+          Tenders, mashed potatoes with country gravy and corn</font></i></p>
+    <p align="center"><i><font size="5"><br>
+        </font></i></p>
+    <p align="center"><i><font size="5"><b>Tuesday:</b> Grilled Beef and
+          Bean Burrito with chips and salsa</font></i></p>
+    <p align="center"><i><font size="5"><br>
+        </font></i></p>
+    <p align="center"><i><font size="5"><b>Wednesday:</b> Chef Salad
+          with bread sticks</font></i></p>
+    <p align="center"><i><font size="5"><br>
+        </font></i></p>
+    <p align="center"><i><font size="5"><b>Thursday:</b> Chicken Breast
+          Sandwich with melted provolone served with house made chips</font></i></p>
+    <p align="center"><i><font size="5"><br>
+        </font></i></p>
+    <p align="center"><i><font size="5"><b>Friday:</b> Spinach and
+          Mushroom Quesadillas served with black bean salad</font></i></p>
+  </body>
+</html>
+
+--------------5GK8giPcjT2T7BYZZDcF2zae--
+
+--===============5932210608457862602==
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+Gbemploy mailing list
+Gbemploy@listmgr.nrao.edu
+https://listmgr.nrao.edu/mailman/listinfo/gbemploy
+
+--===============5932210608457862602==--

@@ -1,0 +1,6 @@
+.env
+dist/
+_home_tchamber_.cache_claude-podman_update-checks__openai_codex.version
+node_modules/
+.wrangler/
+.wrangler-config/

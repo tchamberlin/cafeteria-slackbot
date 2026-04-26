@@ -1,0 +1,34 @@
+/*GBO Cafeteria Menu*/
+
+/April 27th-May 1st/
+
+/
+/
+
+/*Monday:* Breaded Chicken Tenders, mashed potatoes with country gravy and corn/
+
+/
+/
+
+/*Tuesday:* Grilled Beef and Bean Burrito with chips and salsa/
+
+/
+/
+
+/*Wednesday:* Chef Salad with bread sticks/
+
+/
+/
+
+/*Thursday:* Chicken Breast Sandwich with melted provolone served with house made chips/
+
+/
+/
+
+/*Friday:* Spinach and Mushroom Quesadillas served with black bean salad/
+
+
+_______________________________________________
+Gbemploy mailing list
+Gbemploy@listmgr.nrao.edu
+https://listmgr.nrao.edu/mailman/listinfo/gbemploy
