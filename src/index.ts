@@ -7,7 +7,13 @@ import {
   reparseStoredMessages,
   storeRawEmail,
 } from "./menu-store";
-import { formatLunchResponse, parseCommandDate, slackJson, verifySlackRequest } from "./slack";
+import {
+  formatLunchResponse,
+  parseCommandDate,
+  postSlackMessage,
+  slackJson,
+  verifySlackRequest,
+} from "./slack";
 import type { Env, NormalizedEmailMessage } from "./types";
 
 interface EmailEventMessage {
@@ -21,6 +27,12 @@ export default {
   async email(message: EmailEventMessage, env: Env): Promise<void> {
     const normalized = await normalizeEmailMessage(message, env);
     await ingestNormalizedMessage(env, normalized);
+  },
+
+  async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
+    const today = parseCommandDate("today");
+    const result = await loadLunchSpecial(env, today);
+    await postSlackMessage(env, formatLunchResponse(result));
   },
 
   async fetch(request: Request, env: Env): Promise<Response> {

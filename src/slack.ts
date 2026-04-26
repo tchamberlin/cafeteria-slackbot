@@ -49,20 +49,76 @@ export function parseCommandDate(text: string, today = new Date()): string {
   throw new Error(COMMAND_USAGE);
 }
 
-export function formatLunchResponse(result: LunchSpecialResult): string {
+export function formatLunchResponse(result: LunchSpecialResult, now = new Date()): string {
+  const label = dateLabel(result.date, now);
+
   if (result.status === "ok" && result.special) {
-    return `*${result.date} cafeteria special:* ${result.special}${formatSource(result)}`;
+    return `Menu for ${label}: ${result.special}`;
   }
 
   if (result.status === "parse_error") {
     const detail = result.error ? `\nParser error: ${result.error}` : "";
-    return `I found a cafeteria menu email for ${result.date}, but could not parse weekday specials from it.${formatSource(result)}${detail}`;
+    return `Found a menu email for ${label}, but couldn't parse it.${detail}`;
   }
 
   if (result.sourceSubject) {
-    return `No cafeteria special was listed for ${result.date}.${formatSource(result)}`;
+    return `No menu listed for ${label}.`;
   }
-  return `No cafeteria menu email was found for ${result.date}.`;
+  return `No menu email found for ${label}.`;
+}
+
+function dateLabel(targetDate: string, now: Date): string {
+  const today = isoDateUtc(now);
+  const tomorrow = addUtcDays(today, 1);
+  const weekday = weekdayName(targetDate);
+  if (targetDate === today) return `today (${weekday})`;
+  if (targetDate === tomorrow) return `tomorrow (${weekday})`;
+  return `${weekday} (${targetDate})`;
+}
+
+function weekdayName(isoDate: string): string {
+  return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("en-US", {
+    weekday: "long",
+    timeZone: "UTC",
+  });
+}
+
+function isoDateUtc(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function addUtcDays(isoDate: string, days: number): string {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return isoDateUtc(date);
+}
+
+export async function postSlackMessage(env: Env, text: string): Promise<void> {
+  if (!env.SLACK_BOT_TOKEN) {
+    throw new Error("SLACK_BOT_TOKEN is not configured.");
+  }
+  if (!env.SLACK_CHANNEL_ID) {
+    throw new Error("SLACK_CHANNEL_ID is not configured.");
+  }
+
+  const response = await fetch("https://slack.com/api/chat.postMessage", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
+      "content-type": "application/json; charset=utf-8",
+    },
+    body: JSON.stringify({
+      channel: env.SLACK_CHANNEL_ID,
+      text,
+      mrkdwn: true,
+    }),
+  });
+
+  const payload = (await response.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+  if (!response.ok || !payload?.ok) {
+    const detail = payload?.error || `http_${response.status}`;
+    throw new Error(`Slack chat.postMessage failed: ${detail}`);
+  }
 }
 
 export function slackJson(text: string, status = 200): Response {
@@ -76,16 +132,6 @@ export function slackJson(text: string, status = 200): Response {
       headers: { "content-type": "application/json; charset=utf-8" },
     },
   );
-}
-
-function formatSource(result: LunchSpecialResult): string {
-  if (!result.sourceSubject) {
-    return "";
-  }
-  const superseded = result.sourceSupersededCount
-    ? ` (${result.sourceSupersededCount} older menu email${result.sourceSupersededCount === 1 ? "" : "s"} superseded)`
-    : "";
-  return `\nSource: ${result.sourceSubject}${superseded}`;
 }
 
 function timingSafeEqual(left: string, right: string): boolean {

@@ -32,6 +32,16 @@ Run a `.eml` file through the parser locally to inspect what the worker would se
 npm run parse -- example_menu_email.eml
 ```
 
+Post a `.eml` directly to a real Slack channel (no Worker, no KV — bypasses everything to test the message itself):
+
+```bash
+npm run send -- example_menu_email.eml --dry-run         # print, don't post
+npm run send -- example_menu_email.eml                   # post today's special
+npm run send -- example_menu_email.eml --date 2026-04-30 # post a specific day
+```
+
+Reads `SLACK_BOT_TOKEN` and `SLACK_CHANNEL_ID` from `.dev.vars` (or process env).
+
 ## Cloudflare Setup
 
 Create a KV namespace and put its id in `wrangler.toml`:
@@ -45,6 +55,8 @@ Configure secrets or dashboard variables:
 ```bash
 npx wrangler secret put ALLOWED_SENDER
 npx wrangler secret put SLACK_SIGNING_SECRET
+npx wrangler secret put SLACK_BOT_TOKEN
+npx wrangler secret put SLACK_CHANNEL_ID
 npx wrangler secret put ADMIN_TOKEN
 ```
 
@@ -62,6 +74,10 @@ Request URL: https://<worker-domain>/slack/commands
 ```
 
 The Worker uses Slack's signing secret and direct slash-command responses.
+
+For the daily channel post, the Slack app also needs a bot token (`xoxb-...`) with the `chat:write` scope, invited to the target channel. `SLACK_CHANNEL_ID` is the channel ID (e.g. `C0123ABC`), not the name.
+
+The cron is set in `wrangler.toml` (`[triggers] crons = ["0 13 * * *"]`, UTC). 13:00 UTC = 9:00 EDT / 8:00 EST — bump to 14 during EST if you care.
 
 Supported command text:
 

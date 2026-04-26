@@ -6,6 +6,11 @@ compatibility_date = "2026-04-26"
 binding = "MENU_STORE"
 id = "replace-with-kv-namespace-id"
 
+# Daily channel post. Cron runs in UTC.
+# 13:00 UTC = 9:00 EDT / 8:00 EST. Bump to "0 14 * * *" during EST if you care.
+[triggers]
+crons = ["0 13 * * *"]
+
 # Set this to the exact cafeteria sender address in Cloudflare dashboard vars
 # or with `wrangler secret put ALLOWED_SENDER`.
 # ALLOWED_SENDER = "cafeteria@example.com"

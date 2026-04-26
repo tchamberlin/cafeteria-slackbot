@@ -2,6 +2,8 @@ export interface Env {
   MENU_STORE: KVNamespace;
   ALLOWED_SENDER?: string;
   SLACK_SIGNING_SECRET?: string;
+  SLACK_BOT_TOKEN?: string;
+  SLACK_CHANNEL_ID?: string;
   ADMIN_TOKEN?: string;
 }
 
