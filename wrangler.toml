@@ -8,9 +8,10 @@ binding = "MENU_STORE"
 id = "c5037d8b0cab4e06bd96e69bb9919cce"
 
 # Weekday channel post. Cron runs in UTC.
-# 13:00 UTC = 9:00 EDT / 8:00 EST. Bump to "0 14 * * 1-5" during EST if you care.
+# 13:00 UTC = 9:00 EDT / 8:00 EST. Bump to "0 14 * * MON-FRI" during EST if you care.
+# Cloudflare's day-of-week is 1=Sun..7=Sat (NOT standard cron) — use named days.
 [triggers]
-crons = ["0 13 * * 1-5"]
+crons = ["0 13 * * MON-FRI"]
 
 [observability.logs]
 enabled = true
