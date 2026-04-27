@@ -1,4 +1,4 @@
-import type { Env, LunchSpecialResult } from "./types";
+import type { Env, LunchSpecialResult, WeekLunchResult } from "./types";
 import { CAFETERIA_TZ, isoDateInZone } from "./tz";
 
 const COMMAND_USAGE = "Use `/lunch`, `/lunch today`, `/lunch tomorrow`, or `/lunch YYYY-MM-DD`.";
@@ -29,6 +29,17 @@ export async function verifySlackRequest(request: Request, env: Env, body: strin
   );
   const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(base));
   return timingSafeEqual(signature, `v0=${hex(digest)}`);
+}
+
+export function rollWeekendToMonday(isoDate: string): string {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  const day = date.getUTCDay();
+  const offset = day === 0 ? 1 : day === 6 ? 2 : 0;
+  if (offset === 0) {
+    return isoDate;
+  }
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
 }
 
 export function parseCommandDate(text: string, now = new Date()): string {
@@ -65,6 +76,46 @@ export function formatLunchResponse(result: LunchSpecialResult, now = new Date()
     return `No menu listed for ${label}.`;
   }
   return `No menu email found for ${label}.`;
+}
+
+export function formatWeekLunchResponse(result: WeekLunchResult, now = new Date()): string {
+  const today = isoDateInZone(now, CAFETERIA_TZ);
+  const weekLines = buildWeekLines(result);
+
+  if (isWeekend(today) && result.date !== today) {
+    const noServiceLine = `No cafeteria service today (${weekdayName(today)}, ${today}).`;
+    if (weekLines.length === 0) {
+      return `${noServiceLine} No menu yet for next week.`;
+    }
+    return `${noServiceLine} Here's next week:\n\n${weekLines.join("\n")}`;
+  }
+
+  const header = formatLunchResponse(result, now);
+  if (weekLines.length === 0) {
+    return header;
+  }
+  return `${header}\n\nThis week:\n${weekLines.join("\n")}`;
+}
+
+function isWeekend(isoDate: string): boolean {
+  const day = new Date(`${isoDate}T00:00:00Z`).getUTCDay();
+  return day === 0 || day === 6;
+}
+
+function buildWeekLines(result: WeekLunchResult): string[] {
+  const dates = [0, 1, 2, 3, 4].map((offset) => addUtcDays(result.weekStart, offset));
+  if (!dates.some((date) => result.weekSpecials[date])) {
+    return [];
+  }
+  return dates.map((date) => {
+    const weekday = new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", {
+      weekday: "short",
+      timeZone: CAFETERIA_TZ,
+    });
+    const special = result.weekSpecials[date] ?? "(no menu)";
+    const line = `${weekday} ${date}: ${special}`;
+    return date === result.date ? `*${line}*` : line;
+  });
 }
 
 function dateLabel(targetDate: string, now: Date): string {

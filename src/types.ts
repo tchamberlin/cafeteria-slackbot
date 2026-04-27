@@ -86,6 +86,12 @@ export interface LunchSpecialResult {
   error?: string;
 }
 
+export interface WeekLunchResult extends LunchSpecialResult {
+  weekStart: string;
+  weekEnd: string;
+  weekSpecials: Record<string, string>;
+}
+
 export class CafeteriaMenuParseError extends Error {
   readonly weekStart?: string;
 

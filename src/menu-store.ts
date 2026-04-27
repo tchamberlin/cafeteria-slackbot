@@ -9,6 +9,7 @@ import {
   type ParsedCafeteriaMenu,
   type PostedMenuRecord,
   type StoredWeekMenu,
+  type WeekLunchResult,
 } from "./types";
 import { isCafeteriaMenuSubject, parseCafeteriaMenuEmail } from "./menu-parser";
 import { parseCafeteriaMenuWithLlm } from "./llm-parser";
@@ -177,6 +178,32 @@ export async function loadLunchSpecial(env: Env, targetDate: string): Promise<Lu
   };
 }
 
+export async function loadWeekLunch(env: Env, targetDate: string): Promise<WeekLunchResult> {
+  const weekStart = weekStartForIsoDate(targetDate);
+  const menu = await env.MENU_STORE.get<StoredWeekMenu>(weekMenuKey(weekStart), "json");
+  if (!menu?.authoritative) {
+    return {
+      ...missingResult(targetDate),
+      weekStart,
+      weekEnd: addUtcDays(weekStart, 4),
+      weekSpecials: {},
+    };
+  }
+  const special = menu.authoritative.specialsByDate[targetDate] || null;
+  return {
+    date: targetDate,
+    special,
+    status: special ? "ok" : "missing",
+    sourceSubject: menu.authoritative.sourceSubject,
+    sourceReceivedAt: menu.authoritative.sourceReceivedAt,
+    sourceMessageId: menu.authoritative.sourceMessageId,
+    sourceSupersededCount: Math.max(menu.candidates.length - 1, 0),
+    weekStart: menu.weekStart,
+    weekEnd: menu.weekEnd,
+    weekSpecials: { ...menu.authoritative.specialsByDate },
+  };
+}
+
 export async function listMessages(env: Env, limit = 50): Promise<NormalizedEmailMessage[]> {
   const index = await readJson<string[]>(env, EMAIL_INDEX_KEY, []);
   const keys = index.slice(0, clamp(limit, 1, MAX_STORED_MESSAGES)).map((id) => normalizedMessageKey(id));
@@ -324,8 +351,15 @@ function missingResult(targetDate: string): LunchSpecialResult {
 function weekStartForIsoDate(value: string): string {
   const date = new Date(`${value}T00:00:00Z`);
   const day = date.getUTCDay();
-  const mondayOffset = day === 0 ? -6 : 1 - day;
+  // Sat/Sun roll forward to the upcoming Monday so weekend lookups surface next week, not last.
+  const mondayOffset = day === 0 ? 1 : day === 6 ? 2 : 1 - day;
   date.setUTCDate(date.getUTCDate() + mondayOffset);
+  return date.toISOString().slice(0, 10);
+}
+
+function addUtcDays(isoDate: string, days: number): string {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
 }
 

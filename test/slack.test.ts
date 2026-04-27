@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   formatLunchResponse,
+  formatWeekLunchResponse,
   parseCommandDate,
   postSlackAdminMessage,
   postSlackMessage,
   postSlackThreadReply,
+  rollWeekendToMonday,
 } from "../src/slack";
-import type { Env, LunchSpecialResult } from "../src/types";
+import type { Env, LunchSpecialResult, WeekLunchResult } from "../src/types";
 
 const SAT_2345_ET = new Date("2026-04-25T23:45:00-04:00");
 const SUN_0345_UTC = new Date("2026-04-26T03:45:00Z");
@@ -117,6 +119,139 @@ describe("formatLunchResponse", () => {
     const result = makeResult({ status: "missing", special: null, sourceSubject: null });
     expect(formatLunchResponse(result, SUN_0800_ET)).toBe(
       "No menu email found for today (Sunday, 2026-04-26).",
+    );
+  });
+});
+
+describe("rollWeekendToMonday", () => {
+  it("leaves weekday dates untouched", () => {
+    expect(rollWeekendToMonday("2026-04-27")).toBe("2026-04-27"); // Mon
+    expect(rollWeekendToMonday("2026-05-01")).toBe("2026-05-01"); // Fri
+  });
+
+  it("Saturday → following Monday (+2)", () => {
+    expect(rollWeekendToMonday("2026-05-02")).toBe("2026-05-04");
+  });
+
+  it("Sunday → following Monday (+1)", () => {
+    expect(rollWeekendToMonday("2026-05-03")).toBe("2026-05-04");
+  });
+});
+
+describe("formatWeekLunchResponse", () => {
+  const MON_NOON_ET = new Date("2026-04-27T12:00:00-04:00");
+  const FULL_WEEK = {
+    "2026-04-27": "Pizza",
+    "2026-04-28": "Tacos",
+    "2026-04-29": "Burgers",
+    "2026-04-30": "Salad",
+    "2026-05-01": "Sushi",
+  } as const;
+
+  function makeWeek(overrides: Partial<WeekLunchResult> = {}): WeekLunchResult {
+    return {
+      date: "2026-04-27",
+      special: "Pizza",
+      status: "ok",
+      sourceSubject: "GBO Cafeteria Menu",
+      sourceReceivedAt: "2026-04-26T12:00:00Z",
+      sourceMessageId: "id-week",
+      sourceSupersededCount: 0,
+      weekStart: "2026-04-27",
+      weekEnd: "2026-05-01",
+      weekSpecials: { ...FULL_WEEK },
+      ...overrides,
+    };
+  }
+
+  it("shows today at the top and bolds today in the week list", () => {
+    expect(formatWeekLunchResponse(makeWeek(), MON_NOON_ET)).toBe(
+      [
+        "Menu for today (Monday, 2026-04-27): Pizza",
+        "",
+        "This week:",
+        "*Mon 2026-04-27: Pizza*",
+        "Tue 2026-04-28: Tacos",
+        "Wed 2026-04-29: Burgers",
+        "Thu 2026-04-30: Salad",
+        "Fri 2026-05-01: Sushi",
+      ].join("\n"),
+    );
+  });
+
+  it("falls back to the bare header when no week data is available", () => {
+    expect(
+      formatWeekLunchResponse(
+        makeWeek({ status: "missing", special: null, sourceSubject: null, weekSpecials: {} }),
+        MON_NOON_ET,
+      ),
+    ).toBe("No menu email found for today (Monday, 2026-04-27).");
+  });
+
+  it("on Saturday: leads with `no cafeteria today`, then shows next week with Monday bolded", () => {
+    const saturdayNoonEt = new Date("2026-05-02T12:00:00-04:00");
+    const NEXT_WEEK = {
+      "2026-05-04": "Pizza",
+      "2026-05-05": "Tacos",
+      "2026-05-06": "Burgers",
+      "2026-05-07": "Salad",
+      "2026-05-08": "Sushi",
+    };
+    const week = makeWeek({
+      date: "2026-05-04",
+      special: "Pizza",
+      weekStart: "2026-05-04",
+      weekEnd: "2026-05-08",
+      weekSpecials: NEXT_WEEK,
+    });
+
+    expect(formatWeekLunchResponse(week, saturdayNoonEt)).toBe(
+      [
+        "No cafeteria service today (Saturday, 2026-05-02). Here's next week:",
+        "",
+        "*Mon 2026-05-04: Pizza*",
+        "Tue 2026-05-05: Tacos",
+        "Wed 2026-05-06: Burgers",
+        "Thu 2026-05-07: Salad",
+        "Fri 2026-05-08: Sushi",
+      ].join("\n"),
+    );
+  });
+
+  it("on Sunday with no menu yet for next week: still surfaces the weekend header", () => {
+    const sundayNoonEt = new Date("2026-05-03T12:00:00-04:00");
+    // The handler still rolls the highlight to Monday (2026-05-04); loadWeekLunch found no menu.
+    const week = makeWeek({
+      date: "2026-05-04",
+      special: null,
+      status: "missing",
+      sourceSubject: null,
+      weekStart: "2026-05-04",
+      weekEnd: "2026-05-08",
+      weekSpecials: {},
+    });
+
+    expect(formatWeekLunchResponse(week, sundayNoonEt)).toBe(
+      "No cafeteria service today (Sunday, 2026-05-03). No menu yet for next week.",
+    );
+  });
+
+  it("renders the week with `(no menu)` placeholders for missing days", () => {
+    const partial = {
+      "2026-04-27": "Pizza",
+      "2026-04-29": "Burgers",
+    };
+    expect(formatWeekLunchResponse(makeWeek({ weekSpecials: partial }), MON_NOON_ET)).toBe(
+      [
+        "Menu for today (Monday, 2026-04-27): Pizza",
+        "",
+        "This week:",
+        "*Mon 2026-04-27: Pizza*",
+        "Tue 2026-04-28: (no menu)",
+        "Wed 2026-04-29: Burgers",
+        "Thu 2026-04-30: (no menu)",
+        "Fri 2026-05-01: (no menu)",
+      ].join("\n"),
     );
   });
 });

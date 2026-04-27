@@ -3,6 +3,7 @@ import {
   ingestNormalizedMessage,
   loadDailyPost,
   loadLunchSpecial,
+  loadWeekLunch,
   recordDailyPost,
 } from "../src/menu-store";
 import type { Env, NormalizedEmailMessage } from "../src/types";
@@ -181,6 +182,34 @@ describe("menu store follow-up handling", () => {
 
     expect(result.followUp).toBe(false);
     expect(result.becameAuthoritative).toBe(true);
+  });
+});
+
+describe("weekend week resolution", () => {
+  // The seeded menu is for the week of 2026-04-20 (Mon) – 2026-04-24 (Fri).
+  // `2026-04-25` is the Saturday after that week; `2026-04-19` is the Sunday before it.
+  // Both should resolve to the *upcoming* Monday's week.
+
+  it("Saturday rolls forward to the next Monday's week", async () => {
+    const testEnv = env("cafeteria@example.com");
+    await ingestNormalizedMessage(testEnv, message("cafeteria@example.com"));
+
+    // 2026-04-18 is the Saturday before the seeded week; should resolve to weekStart 2026-04-20.
+    const result = await loadWeekLunch(testEnv, "2026-04-18");
+
+    expect(result.weekStart).toBe("2026-04-20");
+    expect(result.weekSpecials).toMatchObject({ "2026-04-20": "Italian Sub" });
+  });
+
+  it("Sunday rolls forward to the next Monday's week", async () => {
+    const testEnv = env("cafeteria@example.com");
+    await ingestNormalizedMessage(testEnv, message("cafeteria@example.com"));
+
+    // 2026-04-19 is the Sunday before the seeded week; should resolve to weekStart 2026-04-20.
+    const result = await loadWeekLunch(testEnv, "2026-04-19");
+
+    expect(result.weekStart).toBe("2026-04-20");
+    expect(result.weekSpecials).toMatchObject({ "2026-04-24": "Spaghetti" });
   });
 });
 

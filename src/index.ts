@@ -5,14 +5,17 @@ import {
   listMenus,
   listMessages,
   loadLunchSpecial,
+  loadWeekLunch,
   recordDailyPost,
   reparseStoredMessages,
   storeRawEmail,
 } from "./menu-store";
 import {
   formatLunchResponse,
+  formatWeekLunchResponse,
   parseCommandDate,
   postSlackMessage,
+  rollWeekendToMonday,
   slackJson,
   verifySlackRequest,
 } from "./slack";
@@ -81,8 +84,14 @@ async function handleSlackCommand(request: Request, env: Env): Promise<Response>
   }
 
   const form = new URLSearchParams(body);
+  const text = (form.get("text") || "").trim();
   try {
-    const targetDate = parseCommandDate(form.get("text") || "");
+    const targetDate = parseCommandDate(text);
+    if (text === "") {
+      const highlightDate = rollWeekendToMonday(targetDate);
+      const week = await loadWeekLunch(env, highlightDate);
+      return slackJson(formatWeekLunchResponse(week));
+    }
     const result = await loadLunchSpecial(env, targetDate);
     return slackJson(formatLunchResponse(result));
   } catch (error) {
