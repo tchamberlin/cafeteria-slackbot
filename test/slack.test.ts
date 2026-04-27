@@ -209,7 +209,7 @@ describe("formatWeekLunchResponse", () => {
       [
         "No cafeteria service today (Saturday, 2026-05-02). Here's next week:",
         "",
-        "*Mon 2026-05-04: Pizza*",
+        "Mon 2026-05-04: Pizza",
         "Tue 2026-05-05: Tacos",
         "Wed 2026-05-06: Burgers",
         "Thu 2026-05-07: Salad",

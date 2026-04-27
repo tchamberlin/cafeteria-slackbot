@@ -80,7 +80,7 @@ export function formatLunchResponse(result: LunchSpecialResult, now = new Date()
 
 export function formatWeekLunchResponse(result: WeekLunchResult, now = new Date()): string {
   const today = isoDateInZone(now, CAFETERIA_TZ);
-  const weekLines = buildWeekLines(result);
+  const weekLines = buildWeekLines(result, today);
 
   if (isWeekend(today) && result.date !== today) {
     const noServiceLine = `No cafeteria service today (${weekdayName(today)}, ${today}).`;
@@ -102,7 +102,7 @@ function isWeekend(isoDate: string): boolean {
   return day === 0 || day === 6;
 }
 
-function buildWeekLines(result: WeekLunchResult): string[] {
+function buildWeekLines(result: WeekLunchResult, today: string): string[] {
   const dates = [0, 1, 2, 3, 4].map((offset) => addUtcDays(result.weekStart, offset));
   if (!dates.some((date) => result.weekSpecials[date])) {
     return [];
@@ -114,7 +114,7 @@ function buildWeekLines(result: WeekLunchResult): string[] {
     });
     const special = result.weekSpecials[date] ?? "(no menu)";
     const line = `${weekday} ${date}: ${special}`;
-    return date === result.date ? `*${line}*` : line;
+    return date === today ? `*${line}*` : line;
   });
 }
 
